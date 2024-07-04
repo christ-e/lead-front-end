@@ -30,8 +30,9 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Login')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      body: Container(
+        width: 300,
+        height: 600,
         child: Form(
           key: _formKey,
           child: Column(
