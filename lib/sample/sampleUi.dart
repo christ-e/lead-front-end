@@ -1,152 +1,128 @@
-import 'package:flutter/material.dart';
+// import 'dart:developer';
+// import 'dart:math';
 
-void main() => runApp(MyApp());
+// import 'package:animated_notch_bottom_bar/animated_notch_bottom_bar/animated_notch_bottom_bar.dart';
+// import 'package:flutter/material.dart';
+// import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
+// import 'package:lead_application/create/screen/homeScreen/listScreen/list_deatils_screen.dart';
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginPage(),
-      routes: {
-        '/login': (context) => LoginPage(),
-        '/create_account': (context) => CreateAccountPage(),
-      },
-    );
-  }
-}
+// void main() {
+//   runApp(const MyApp());
+// }
 
-class LoginPage extends StatefulWidget {
-  @override
-  _LoginPageState createState() => _LoginPageState();
-}
+// class MyApp extends StatelessWidget {
+//   const MyApp({Key? key}) : super(key: key);
 
-class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  String _email = '';
-  String _password = '';
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Animated Notch Bottom Bar',
+//       theme: ThemeData(
+//         primarySwatch: Colors.blue,
+//       ),
+//       home: const BottomNav(),
+//     );
+//   }
+// }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Container(
-        width: 300,
-        height: 600,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _email = value!,
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _password = value!,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    // Perform login action with _email and _password
-                  }
-                },
-                child: Text('Login'),
-              ),
-              SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/create_account');
-                },
-                child: Text('Create Account'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// class BottomNav extends StatefulWidget {
+//   const BottomNav({super.key});
 
-class CreateAccountPage extends StatefulWidget {
-  @override
-  _CreateAccountPageState createState() => _CreateAccountPageState();
-}
+//   @override
+//   State<BottomNav> createState() => _BottomNavState();
+// }
 
-class _CreateAccountPageState extends State<CreateAccountPage> {
-  final _formKey = GlobalKey<FormState>();
-  String _email = '';
-  String _password = '';
+// class _BottomNavState extends State<BottomNav> {
+//   /// Controller to handle PageView and also handles initial page
+//   final _pageController = PageController(initialPage: 0);
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Create Account')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _email = value!,
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _password = value!,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    // Perform create account action with _email and _password
-                  }
-                },
-                child: Text('Create Account'),
-              ),
-              SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Back to Login'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+//   /// Controller to handle bottom nav bar and also handles initial page
+//   final NotchBottomBarController _controller =
+//       NotchBottomBarController(index: 0);
+
+//   int maxCount = 3;
+
+//   @override
+//   void dispose() {
+//     _pageController.dispose();
+
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     /// widget list
+//     final List<Widget> bottomBarPages = [
+//       const AddDetailsScreen(
+//           // controller: (_controller),
+//           ),
+//       const ListScreen(),
+//       const AddDetailsScreen(),
+//     ];
+//     return Scaffold(
+//       body: PageView(
+//         controller: _pageController,
+//         physics: const NeverScrollableScrollPhysics(),
+//         children: List.generate(
+//             bottomBarPages.length, (index) => bottomBarPages[index]),
+//       ),
+//       extendBody: false,
+//       bottomNavigationBar: (bottomBarPages.length <= maxCount)
+//           ? AnimatedNotchBottomBar(
+//               /// Provide NotchBottomBarController
+//               notchBottomBarController: _controller,
+//               color: Colors.white,
+//               showLabel: true,
+//               textOverflow: TextOverflow.visible,
+//               maxLine: 1,
+//               shadowElevation: 5,
+//               kBottomRadius: 28.0,
+
+//               // notchShader: const SweepGradient(
+//               //   startAngle: 0,
+//               //   endAngle: pi / 2,
+//               //   colors: [Colors.red, Colors.green, Colors.orange],
+//               //   tileMode: TileMode.mirror,
+//               // ).createShader(Rect.fromCircle(center: Offset.zero, radius: 8.0)),
+//               notchColor: Colors.blueGrey,
+
+//               /// restart app if you change removeMargins
+//               removeMargins: false,
+//               bottomBarWidth: 400,
+//               showShadow: false,
+//               durationInMilliSeconds: 300,
+
+//               itemLabelStyle: const TextStyle(fontSize: 10),
+
+//               elevation: 1,
+//               bottomBarItems: const [
+//                 BottomBarItem(
+//                   inActiveItem: Icon(
+//                     Icons.home_filled,
+//                     color: Colors.blueGrey,
+//                   ),
+//                   activeItem: Icon(
+//                     Icons.home_filled,
+//                     color: Colors.blueAccent,
+//                   ),
+//                   itemLabel: 'list',
+//                 ),
+//                 BottomBarItem(
+//                   inActiveItem: Icon(Icons.star, color: Colors.blueGrey),
+//                   activeItem: Icon(
+//                     Icons.star,
+//                     color: Colors.blueAccent,
+//                   ),
+//                   itemLabel: 'Create',
+//                 ),
+//               ],
+//               onTap: (index) {
+//                 //  log('current selected index $index');
+//                 _pageController.jumpToPage(index);
+//               },
+//               kIconSize: 24.0,
+//             )
+//           : null,
+//     );
+//   }
+// }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class AddDetailsScreen extends StatefulWidget {
   const AddDetailsScreen({super.key});
@@ -13,17 +15,66 @@ class AddDetailsScreen extends StatefulWidget {
 }
 
 class _AddDetailsScreenState extends State<AddDetailsScreen> {
-  final _formKey = GlobalKey<FormBuilderState>(); // Changed to FormBuilderState
+  final _formKey = GlobalKey<FormBuilderState>();
   String _location = '';
+  String _contact = '';
+
+  List<dynamic> _states = [];
+  List<dynamic> _districts = [];
+  List<dynamic> _cities = [];
+
+  String? _selectedState;
+  String? _selectedDistrict;
+  String? _selectedCity;
+
+  final List<String> _priorities = ['Hot', 'Warm', 'Cold'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStates();
+  }
+
+  Future<void> _fetchStates() async {
+    final response =
+        await http.get(Uri.parse('http://127.0.0.1:8000/api/states'));
+    if (response.statusCode == 200) {
+      setState(() {
+        _states = jsonDecode(response.body);
+      });
+    }
+  }
+
+  Future<void> _fetchDistricts(String stateId) async {
+    final response = await http
+        .get(Uri.parse('http://127.0.0.1:8000/api/districts/$stateId'));
+    if (response.statusCode == 200) {
+      setState(() {
+        _districts = jsonDecode(response.body);
+        _cities = [];
+        _selectedDistrict = null;
+        _selectedCity = null;
+      });
+    }
+  }
+
+  Future<void> _fetchCities(String districtId) async {
+    final response = await http
+        .get(Uri.parse('http://127.0.0.1:8000/api/cities/$districtId'));
+    if (response.statusCode == 200) {
+      setState(() {
+        _cities = jsonDecode(response.body);
+        _selectedCity = null;
+      });
+    }
+  }
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Test if location services are enabled.
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Location services are not enabled, don't continue
       setState(() {
         _location = 'Location services are disabled.';
       });
@@ -34,7 +85,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Permissions are denied, don't continue
         setState(() {
           _location = 'Location permissions are denied';
         });
@@ -43,40 +93,49 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, don't continue
       setState(() {
         _location = 'Location permissions are permanently denied';
       });
       return;
     }
 
-    // When we reach here, permissions are granted and we can get the location
     Position position = await Geolocator.getCurrentPosition();
     setState(() {
       _location = 'Lat: ${position.latitude}, Long: ${position.longitude}';
-      // Update the FormBuilderTextField's value
-      _formKey.currentState?.fields['Location Coordinates']
-          ?.didChange(_location);
     });
-    print(_location); // Print the updated location
+    _formKey.currentState?.fields['location_coordinates']?.didChange(_location);
+    print(_location);
   }
 
-  final List<String> _states = [
-    'State 1',
-    'State 2',
-    'State 3'
-  ]; // Replace with your data
-  final List<String> _districts = [
-    'District 1',
-    'District 2',
-    'District 3'
-  ]; // Replace with your data
-  final List<String> _cities = [
-    'City 1',
-    'City 2',
-    'City 3'
-  ]; // Replace with your data
-  final List<String> _priorities = ['Hot', 'Warm', 'Cold'];
+  Future<void> _submitForm(Map<String, dynamic> formDetails) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:8000/api/store'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(formDetails),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // Handle successful response
+      print('Form submitted successfully');
+      // Optionally, show a success message or navigate to another screen
+    } else if (response.statusCode == 422) {
+      // Handle validation error response
+      final errors = jsonDecode(response.body)['errors'];
+      errors.forEach((field, messages) {
+        _formKey.currentState?.invalidateField(
+          name: field,
+          errorText: messages.join(', '),
+        );
+      });
+    } else {
+      // Handle other error responses
+      print('Failed to submit form');
+      // Optionally, show an error message
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +144,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
         title: const Text('Add Details'),
       ),
       body: FormBuilder(
-        key: _formKey, // Changed to FormBuilder
+        key: _formKey,
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: SingleChildScrollView(
@@ -97,7 +156,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
                   ]),
-                  name: "Name",
+                  name: "name",
                   decoration: InputDecoration(
                     icon: Icon(Icons.person, color: Colors.blue),
                     label: Text("Name"),
@@ -107,13 +166,19 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 const SizedBox(height: 15),
                 FormBuilderTextField(
                   keyboardType: TextInputType.phone,
+                  initialValue: _contact,
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
-                    // Uncomment for phone validation
-                    // FormBuilderValidators.phone(context),
                   ]),
-                  name: "Contact Number",
+                  name: "contact_number",
                   decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _contact = "No Contact Selected";
+                          });
+                        },
+                        icon: Icon(Icons.contacts_rounded)),
                     icon: Icon(Icons.phone, color: Colors.blue),
                     label: Text("Contact Number"),
                     border: OutlineInputBorder(),
@@ -123,7 +188,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 Padding(
                   padding: const EdgeInsets.only(left: 50),
                   child: FormBuilderCheckbox(
-                    name: 'WhatsApp',
+                    name: 'whats_app',
                     title: Text('If this number is also a WhatsApp number'),
                     initialValue: false,
                     validator: FormBuilderValidators.compose([]),
@@ -134,7 +199,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   autocorrect: true,
                   keyboardType: TextInputType.emailAddress,
                   validator: FormBuilderValidators.compose([]),
-                  name: "Email",
+                  name: "email",
                   decoration: InputDecoration(
                     icon: Icon(Icons.email, color: Colors.blue),
                     label: Text("Email (Optional)"),
@@ -149,7 +214,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
                   ]),
-                  name: "Address",
+                  name: "address",
                   decoration: InputDecoration(
                     icon: Icon(Icons.home, color: Colors.blue),
                     label: Text("Address"),
@@ -158,7 +223,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 ),
                 const SizedBox(height: 15),
                 FormBuilderDropdown<String>(
-                  name: 'State',
+                  name: 'state',
                   decoration: InputDecoration(
                     icon: Icon(Icons.map, color: Colors.blue),
                     label: Text('State'),
@@ -166,44 +231,56 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   ),
                   items: _states
                       .map((state) => DropdownMenuItem(
-                            value: state,
-                            child: Text(state),
+                            value: state['id'].toString(),
+                            child: Text(state['state']),
                           ))
                       .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedState = value;
+                      _fetchDistricts(value!);
+                    });
+                  },
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
                   ]),
                 ),
                 const SizedBox(height: 15),
                 FormBuilderDropdown<String>(
-                  name: 'District',
+                  name: 'district',
                   decoration: InputDecoration(
-                    icon: Icon(Icons.map, color: Colors.blue),
+                    icon: Icon(Icons.home_work_outlined, color: Colors.blue),
                     label: Text('District'),
                     border: OutlineInputBorder(),
                   ),
                   items: _districts
                       .map((district) => DropdownMenuItem(
-                            value: district,
-                            child: Text(district),
+                            value: district['id' 'district'].toString(),
+                            child: Text(district['district']),
                           ))
                       .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDistrict = value;
+                      _fetchCities(value!);
+                    });
+                  },
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
                   ]),
                 ),
                 const SizedBox(height: 15),
                 FormBuilderDropdown<String>(
-                  name: 'City',
+                  name: 'city',
                   decoration: InputDecoration(
-                    icon: Icon(Icons.location_city, color: Colors.blue),
+                    icon: Icon(Icons.home_work_rounded, color: Colors.blue),
                     label: Text('City'),
                     border: OutlineInputBorder(),
                   ),
                   items: _cities
                       .map((city) => DropdownMenuItem(
-                            value: city,
-                            child: Text(city),
+                            value: city['id'].toString(),
+                            child: Text(city['city']),
                           ))
                       .toList(),
                   validator: FormBuilderValidators.compose([
@@ -213,15 +290,14 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 const SizedBox(height: 15),
                 FormBuilderTextField(
                   readOnly: true,
-                  keyboardType:
-                      TextInputType.text, // Changed to TextInputType.text
+                  keyboardType: TextInputType.number,
                   initialValue: _location,
-                  name: 'Location Coordinates',
+                  name: 'location_coordinates',
                   decoration: InputDecoration(
                     icon: Icon(Icons.location_on, color: Colors.blue),
                     suffixIcon: IconButton(
                         onPressed: () {
-                          _getCurrentLocation(); // Corrected to call the method
+                          _getCurrentLocation();
                         },
                         icon: Icon(Icons.gps_fixed_rounded)),
                     label: Text('Location Coordinates'),
@@ -233,9 +309,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 ),
                 const SizedBox(height: 15),
                 FormBuilderRadioGroup<String>(
-                  name: 'Follow Up',
+                  name: 'follow_up',
                   decoration: InputDecoration(
-                    icon: Icon(Icons.follow_the_signs, color: Colors.blue),
+                    icon: Icon(Icons.rate_review, color: Colors.blue),
                     label: Text('Follow Up'),
                     border: OutlineInputBorder(),
                   ),
@@ -249,7 +325,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 ),
                 const SizedBox(height: 15),
                 FormBuilderDropdown<String>(
-                  name: 'Lead Priority',
+                  name: 'lead_priority',
                   decoration: InputDecoration(
                     icon: Icon(Icons.priority_high, color: Colors.blue),
                     label: Text('Lead Priority'),
@@ -268,11 +344,17 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState?.validate() ?? false) {
+                    if (_formKey.currentState!.validate()) {
+                      // Save the form state
+                      _formKey.currentState!.save();
+
                       // Process the data
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Processing Data')),
-                      );
+                      final formDetails = _formKey.currentState!.value;
+                      print(formDetails);
+
+                      // Submit the form details
+                      _submitForm(formDetails);
+                      print(jsonEncode(formDetails));
                     }
                   },
                   child: Text('Submit'),
