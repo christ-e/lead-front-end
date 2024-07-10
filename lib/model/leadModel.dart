@@ -1,29 +1,31 @@
-// ignore_for_file: file_names
-
+// ignore_for_file: file_names, non_constant_identifier_names
 class Lead {
   final int id;
-  final String name;
-  final String contactNumber;
-  final String address;
-  final String state;
-  final String district;
-  final String city;
-  final String locationCoordinates;
-  final String followUp;
-  final String leadPriority;
+  final String? name;
+  final String? contactNumber;
+  final String? address;
+  final int? whatsapp;
+  final String? state_name;
+  final String? district_name;
+  final String? city_name;
+  final String? locationCoordinates;
+  final String? leadPriority;
+  final String? followUp;
 
   Lead({
     required this.id,
-    required this.name,
-    required this.contactNumber,
-    required this.address,
-    required this.state,
-    required this.district,
-    required this.city,
-    required this.locationCoordinates,
-    required this.followUp,
-    required this.leadPriority,
+    this.name,
+    this.contactNumber,
+    this.address,
+    this.whatsapp,
+    this.state_name,
+    this.district_name,
+    this.city_name,
+    this.locationCoordinates,
+    this.leadPriority,
+    this.followUp,
   });
+  // "district_name": "Kollam",
 
   factory Lead.fromJson(Map<String, dynamic> json) {
     return Lead(
@@ -31,12 +33,13 @@ class Lead {
       name: json['name'],
       contactNumber: json['contact_number'],
       address: json['address'],
-      state: json['state'],
-      district: json['district'],
-      city: json['city'],
+      whatsapp: json['whats_app'],
+      state_name: json['state_name'],
+      district_name: json['district_name'],
+      city_name: json['city_name'],
       locationCoordinates: json['location_coordinates'],
-      followUp: json['follow_up'],
       leadPriority: json['lead_priority'],
+      followUp: json['follow_up'],
     );
   }
 }

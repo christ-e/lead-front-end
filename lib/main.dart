@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
 
 void main() {
@@ -12,6 +13,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: BottomNav());
+    return ProviderScope(
+        child:
+            MaterialApp(debugShowCheckedModeBanner: false, home: BottomNav()));
   }
 }

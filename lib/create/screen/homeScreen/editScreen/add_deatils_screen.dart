@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, deprecated_member_use, avoid_print, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -119,8 +119,13 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       // Handle successful response
-      print('Form submitted successfully');
-      // Optionally, show a success message or navigate to another screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Form submitted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Optionally, navigate to another screen
     } else if (response.statusCode == 422) {
       // Handle validation error response
       final errors = jsonDecode(response.body)['errors'];
@@ -130,9 +135,21 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
           errorText: messages.join(', '),
         );
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Validation errors occurred.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
     } else {
       // Handle other error responses
-      print('Failed to submit form');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit form'),
+          backgroundColor: Colors.red,
+        ),
+      );
       // Optionally, show an error message
     }
   }
@@ -226,19 +243,19 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   name: 'state',
                   decoration: InputDecoration(
                     icon: Icon(Icons.map, color: Colors.blue),
-                    label: Text('State'),
+                    labelText: 'State',
                     border: OutlineInputBorder(),
                   ),
-                  items: _states
-                      .map((state) => DropdownMenuItem(
-                            value: state['id'].toString(),
-                            child: Text(state['state']),
-                          ))
-                      .toList(),
+                  items: _states.map((state) {
+                    return DropdownMenuItem(
+                      value: state['id'].toString(),
+                      child: Text(state['state']),
+                    );
+                  }).toList(),
                   onChanged: (value) {
                     setState(() {
                       _selectedState = value;
-                      _fetchDistricts(value!);
+                      _fetchDistricts(_selectedState.toString());
                     });
                   },
                   validator: FormBuilderValidators.compose([
@@ -255,7 +272,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   ),
                   items: _districts
                       .map((district) => DropdownMenuItem(
-                            value: district['id' 'district'].toString(),
+                            value: district['id'].toString(),
                             child: Text(district['district']),
                           ))
                       .toList(),
