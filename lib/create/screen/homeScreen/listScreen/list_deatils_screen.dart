@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, unused_result
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,58 +37,71 @@ class ListScreen extends ConsumerWidget {
         data: (leads) => leads.isEmpty
             ? Center(child: Text('No Leads Found'))
             : ListView.separated(
-                separatorBuilder: (context, index) => const Divider(),
+                separatorBuilder: (context, index) => const Divider(
+                  thickness: 2,
+                  //color: Colors.blueGrey,
+                  indent: 1, endIndent: 2,
+                ),
                 itemCount: leads.length,
                 itemBuilder: (context, index) {
                   final lead = leads[index];
                   return ListTile(
+                    selectedColor: Colors.blueGrey,
                     title: Text(
                       lead.name ?? 'No Name',
                       style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     ),
-                    subtitle: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    subtitle: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'contact number :${lead.contactNumber ?? 'No Contact Number'}\n'
-                          'address :${lead.address ?? 'No Address'}',
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'contact number :${lead.contactNumber ?? 'No Contact Number'}\n'
+                              'address :${lead.address ?? 'No Address'}',
+                            ),
+                            lead.whatsapp == 1
+                                ? Text('whatsapp :yes')
+                                : Text('whatsapp :no'),
+                            Text('state :${lead.state_name ?? 'No State'}'),
+                            Text(
+                                'district :${lead.district_name ?? 'No District'}'),
+                            Text('city :${lead.city_name ?? 'No City'}'),
+                            Text(
+                              'coordinates :${lead.locationCoordinates ?? 'No Coordinates'}',
+                              style: TextStyle(
+                                  wordSpacing: 2,
+                                  textBaseline: TextBaseline.alphabetic),
+                            ),
+                          ],
                         ),
-                        lead.whatsapp == 1
-                            ? Text('whatsapp :yes')
-                            : Text('whatsapp :no'),
-                        Text('state :${lead.state_name ?? 'No State'}'),
-                        Text(
-                            'district :${lead.district_name ?? 'No District'}'),
-                        Text('city :${lead.city_name ?? 'No City'}'),
-                        Text(
-                          'coordinates :${lead.locationCoordinates ?? 'No Coordinates'}',
-                          style: TextStyle(
-                              wordSpacing: 2,
-                              textBaseline: TextBaseline.alphabetic),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Lead Priority :${lead.leadPriority ?? 'No Priority'}',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                            Text(
+                              'Follow up :${lead.followUp ?? 'No Follow Up'}',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600),
+                            ),
+                            SizedBox(
+                              height: 30,
+                            ),
+                            IconButton(
+                                onPressed: () {}, icon: Icon(Icons.edit)),
+                            IconButton(
+                                onPressed: () {}, icon: Icon(Icons.delete)),
+                          ],
                         ),
                       ],
                     ),
                     isThreeLine: true,
-                    trailing: Column(
-                      children: [
-                        Text(
-                          'Lead Priority :${lead.leadPriority ?? 'No Priority'}',
-                          style: TextStyle(fontSize: 15),
-                        ),
-                        Text(
-                          'Follow up :${lead.followUp ?? 'No Follow Up'}',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w600),
-                        ),
-                        // IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
-                        // SizedBox(
-                        //   height: 10,
-                        // ),
-                        // IconButton(onPressed: () {}, icon: Icon(Icons.delete)),
-                      ],
-                    ),
                   );
                 },
               ),
@@ -98,6 +111,9 @@ class ListScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('Something went wrong: $error'),
+              SizedBox(
+                height: 10,
+              ),
               ElevatedButton(
                 onPressed: () {
                   ref.refresh(leadsProvider);

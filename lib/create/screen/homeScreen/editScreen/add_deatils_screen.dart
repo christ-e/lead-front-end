@@ -167,6 +167,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                SizedBox(
+                  height: 5,
+                ),
                 FormBuilderTextField(
                   autocorrect: true,
                   keyboardType: TextInputType.name,
@@ -325,22 +328,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   ]),
                 ),
                 const SizedBox(height: 15),
-                FormBuilderRadioGroup<String>(
-                  name: 'follow_up',
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.rate_review, color: Colors.blue),
-                    label: Text('Follow Up'),
-                    border: OutlineInputBorder(),
-                  ),
-                  options: [
-                    FormBuilderFieldOption(value: 'Yes', child: Text('Yes')),
-                    FormBuilderFieldOption(value: 'No', child: Text('No')),
-                  ],
-                  validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(),
-                  ]),
-                ),
-                const SizedBox(height: 15),
                 FormBuilderDropdown<String>(
                   name: 'lead_priority',
                   decoration: InputDecoration(
@@ -354,6 +341,22 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                             child: Text(priority),
                           ))
                       .toList(),
+                  validator: FormBuilderValidators.compose([
+                    FormBuilderValidators.required(),
+                  ]),
+                ),
+                const SizedBox(height: 15),
+                FormBuilderRadioGroup<String>(
+                  name: 'follow_up',
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.rate_review, color: Colors.blue),
+                    label: Text('Follow Up'),
+                    border: OutlineInputBorder(),
+                  ),
+                  options: [
+                    FormBuilderFieldOption(value: 'Yes', child: Text('Yes')),
+                    FormBuilderFieldOption(value: 'No', child: Text('No')),
+                  ],
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
                   ]),
