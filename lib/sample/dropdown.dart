@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -24,21 +26,9 @@ class DistrictDropdown extends StatefulWidget {
 }
 
 class _DistrictDropdownState extends State<DistrictDropdown> {
-  final List<String> districts = [
-    'Alappuzha',
-    'Ernakulam',
-    'Idukki',
-    'Kannur',
-    'Kasaragod',
-    'Kollam',
-    'Kottayam',
-    'Kozhikode',
-    'Malappuram',
-    'Palakkad',
-    'Pathanamthitta',
-    'Thiruvananthapuram',
-    'Thrissur',
-    'Wayanad'
+  final List<Map<String, dynamic>> districts = [
+    {'name': 'Alappuzha', 'id': 1},
+    {'name': 'Ernakulam', 'id': 2},
   ];
 
   String? selectedDistrict;
@@ -46,21 +36,21 @@ class _DistrictDropdownState extends State<DistrictDropdown> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: DropdownButton<String>(
-        hint: Text('Select a District'),
-        value: selectedDistrict,
-        items: districts.map((String district) {
-          return DropdownMenuItem<String>(
-            value: district,
-            child: Text(district),
-          );
-        }).toList(),
-        onChanged: (String? newValue) {
-          setState(() {
-            selectedDistrict = newValue;
-          });
-        },
-      ),
-    );
+        child: DropdownButton<String>(
+            hint: Text('Select a District'),
+            value: selectedDistrict,
+            items: districts.map((e) {
+              return DropdownMenuItem<String>(
+                value: e['id'].toString(),
+                child: Text(e['name']),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedDistrict = newValue;
+                // log(newValue.toString());
+                print(newValue.toString());
+              });
+            }));
   }
 }

@@ -2,10 +2,40 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/riverpod/api_functions.dart';
+import 'package:http/http.dart' as http;
 
 class ListScreen extends ConsumerWidget {
   const ListScreen({super.key});
+
+  Future<void> deleteLead(
+      BuildContext context, int leadId, WidgetRef ref) async {
+    final response = await http.delete(
+      Uri.parse('http://127.0.0.1:8000/api/lead_data/$leadId'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 204) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lead deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      ref.refresh(leadsProvider);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete lead'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14,7 +44,10 @@ class ListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey,
-        title: const Text('Leads List'),
+        title: const Text(
+          'Leads List',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
               onPressed: () {},
@@ -39,8 +72,8 @@ class ListScreen extends ConsumerWidget {
             : ListView.separated(
                 separatorBuilder: (context, index) => const Divider(
                   thickness: 2,
-                  //color: Colors.blueGrey,
-                  indent: 1, endIndent: 2,
+                  indent: 1,
+                  endIndent: 2,
                 ),
                 itemCount: leads.length,
                 itemBuilder: (context, index) {
@@ -94,9 +127,23 @@ class ListScreen extends ConsumerWidget {
                               height: 30,
                             ),
                             IconButton(
-                                onPressed: () {}, icon: Icon(Icons.edit)),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddDetailsScreen(
+                                          //  lead: lead,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.edit)),
                             IconButton(
-                                onPressed: () {}, icon: Icon(Icons.delete)),
+                                onPressed: () {
+                                  deleteLead(context, lead.id, ref);
+                                  ref.refresh(leadsProvider);
+                                },
+                                icon: Icon(Icons.delete)),
                           ],
                         ),
                       ],

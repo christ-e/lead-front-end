@@ -6,9 +6,13 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
+import 'package:lead_application/model/leadModel.dart';
 
 class AddDetailsScreen extends StatefulWidget {
-  const AddDetailsScreen({super.key});
+  final Lead? lead; //add
+
+  const AddDetailsScreen({super.key, this.lead}); //add
 
   @override
   State<AddDetailsScreen> createState() => _AddDetailsScreenState();
@@ -33,6 +37,23 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   void initState() {
     super.initState();
     _fetchStates();
+    if (widget.lead != null) {
+      //add
+      _initializeLeadData(widget.lead!); //add
+    }
+  }
+
+  void _initializeLeadData(Lead lead) {
+    //add
+    setState(() {
+      _contact = lead.contactNumber ?? '';
+      _location = lead.locationCoordinates ?? '';
+      _selectedState = lead.state_name ?? '';
+      _selectedDistrict = lead.district_name ?? '';
+      _selectedCity = lead.city_name ?? '';
+      _fetchDistricts(_selectedState!);
+      _fetchCities(_selectedDistrict!);
+    });
   }
 
   Future<void> _fetchStates() async {
@@ -345,14 +366,19 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     FormBuilderValidators.required(),
                   ]),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
                 FormBuilderRadioGroup<String>(
                   name: 'follow_up',
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.rate_review, color: Colors.blue),
-                    label: Text('Follow Up'),
-                    border: OutlineInputBorder(),
+                  separator: SizedBox(
+                    width: 20,
                   ),
+                  decoration: InputDecoration(
+                      icon: Icon(Icons.rate_review, color: Colors.blue),
+                      label: Text('Follow Up'),
+                      //  contentPadding: EdgeInsets.only(top: 50),
+                      border:
+                          // InputBorder.none
+                          OutlineInputBorder(borderSide: BorderSide.none)),
                   options: [
                     FormBuilderFieldOption(value: 'Yes', child: Text('Yes')),
                     FormBuilderFieldOption(value: 'No', child: Text('No')),
@@ -364,18 +390,20 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Save the form state
-                      _formKey.currentState!.save();
-
-                      // Process the data
-                      final formDetails = _formKey.currentState!.value;
-                      print(formDetails);
-
-                      // Submit the form details
-                      _submitForm(formDetails);
-                      print(jsonEncode(formDetails));
-                    }
+                    setState(() {
+                      if (_formKey.currentState!.validate()) {
+                        _formKey.currentState!.save();
+                        final formDetails = _formKey.currentState!.value;
+                        print(formDetails);
+                        _submitForm(formDetails);
+                        print(jsonEncode(formDetails));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BottomNav(),
+                            ));
+                      }
+                    });
                   },
                   child: Text('Submit'),
                 ),
@@ -387,3 +415,5 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     );
   }
 }
+
+// 'http://127.0.0.1:8000/api/lead_data/{id}'//edit

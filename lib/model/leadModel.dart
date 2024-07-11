@@ -42,4 +42,6 @@ class Lead {
       followUp: json['follow_up'],
     );
   }
+
+  get emailAddress => null;
 }
