@@ -78,77 +78,80 @@ class ListScreen extends ConsumerWidget {
                 itemCount: leads.length,
                 itemBuilder: (context, index) {
                   final lead = leads[index];
-                  return ListTile(
-                    selectedColor: Colors.blueGrey,
-                    title: Text(
-                      lead.name ?? 'No Name',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  return Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: ListTile(
+                      selectedColor: Colors.blueGrey,
+                      title: Text(
+                        lead.name ?? 'No Name',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'contact number :${lead.contactNumber ?? 'No Contact Number'}\n'
+                                'address :${lead.address ?? 'No Address'}',
+                              ),
+                              lead.whatsapp == 1
+                                  ? Text('whatsapp :yes')
+                                  : Text('whatsapp :no'),
+                              Text('state :${lead.state_name ?? 'No State'}'),
+                              Text(
+                                  'district :${lead.district_name ?? 'No District'}'),
+                              Text('city :${lead.city_name ?? 'No City'}'),
+                              Text(
+                                'coordinates :${lead.locationCoordinates ?? 'No Coordinates'}',
+                                style: TextStyle(
+                                    wordSpacing: 2,
+                                    textBaseline: TextBaseline.alphabetic),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Lead Priority :${lead.leadPriority ?? 'No Priority'}',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                              Text(
+                                'Follow up :${lead.followUp ?? 'No Follow Up'}',
+                                style: TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.w600),
+                              ),
+                              SizedBox(
+                                height: 30,
+                              ),
+                              IconButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddDetailsScreen(
+                                            //  lead: lead,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  icon: Icon(Icons.edit)),
+                              IconButton(
+                                  onPressed: () {
+                                    deleteLead(context, lead.id, ref);
+                                    ref.refresh(leadsProvider);
+                                  },
+                                  icon: Icon(Icons.delete)),
+                            ],
+                          ),
+                        ],
+                      ),
+                      isThreeLine: true,
                     ),
-                    subtitle: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'contact number :${lead.contactNumber ?? 'No Contact Number'}\n'
-                              'address :${lead.address ?? 'No Address'}',
-                            ),
-                            lead.whatsapp == 1
-                                ? Text('whatsapp :yes')
-                                : Text('whatsapp :no'),
-                            Text('state :${lead.state_name ?? 'No State'}'),
-                            Text(
-                                'district :${lead.district_name ?? 'No District'}'),
-                            Text('city :${lead.city_name ?? 'No City'}'),
-                            Text(
-                              'coordinates :${lead.locationCoordinates ?? 'No Coordinates'}',
-                              style: TextStyle(
-                                  wordSpacing: 2,
-                                  textBaseline: TextBaseline.alphabetic),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Lead Priority :${lead.leadPriority ?? 'No Priority'}',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                            Text(
-                              'Follow up :${lead.followUp ?? 'No Follow Up'}',
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w600),
-                            ),
-                            SizedBox(
-                              height: 30,
-                            ),
-                            IconButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AddDetailsScreen(
-                                          //  lead: lead,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(Icons.edit)),
-                            IconButton(
-                                onPressed: () {
-                                  deleteLead(context, lead.id, ref);
-                                  ref.refresh(leadsProvider);
-                                },
-                                icon: Icon(Icons.delete)),
-                          ],
-                        ),
-                      ],
-                    ),
-                    isThreeLine: true,
                   );
                 },
               ),
