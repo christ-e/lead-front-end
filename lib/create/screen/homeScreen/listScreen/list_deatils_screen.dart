@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/riverpod/api_functions.dart';
 import 'package:http/http.dart' as http;
@@ -63,6 +64,7 @@ class ListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final leadsAsyncValue = ref.watch(leadsProvider);
     //ref.refresh(leadsProvider);
+    ApiEndPoints endPoints = ApiEndPoints();
 
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 233, 251, 255),
@@ -148,11 +150,43 @@ class ListScreen extends ConsumerWidget {
                                 SizedBox(
                                   height: 10,
                                 ),
-                                Text(
-                                  lead.name ?? 'No Name',
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600),
+                                Row(
+                                  children: [
+                                    Text(
+                                      lead.name ?? 'No Name',
+                                      style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    lead.image_path != null
+                                        ? CircleAvatar(
+                                            radius: 30,
+                                            backgroundColor: leads.length.isOdd
+                                                ? Color.fromARGB(
+                                                    255, 234, 239, 241)
+                                                : Color.fromARGB(
+                                                    255, 192, 198, 230),
+                                            backgroundImage: NetworkImage(
+                                              "${ApiEndPoints.authEndpoints.leadImage}${lead.image_path}",
+                                            ),
+                                          )
+                                        : CircleAvatar(
+                                            radius: 30,
+                                            foregroundColor: Colors.black,
+                                            backgroundColor: leads.length.isOdd
+                                                ? Color.fromARGB(
+                                                    255, 234, 239, 241)
+                                                : Color.fromARGB(
+                                                    255, 192, 198, 230),
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 50,
+                                            ),
+                                          )
+                                  ],
                                 ),
                                 Row(
                                   children: [
@@ -316,7 +350,15 @@ class ListScreen extends ConsumerWidget {
                                         ],
                                       )
                                     : Container(),
-                                Divider(),
+                                SizedBox(
+                                  height: 3,
+                                ),
+                                leads.length.isOdd
+                                    ? Divider()
+                                    : Divider(
+                                        color:
+                                            Color.fromARGB(255, 177, 177, 177),
+                                      ),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,

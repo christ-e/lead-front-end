@@ -27,10 +27,6 @@ class _BottomNavState extends State<BottomNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   // title: Text('Lead Enquiry'),
-      //   backgroundColor: Color.fromARGB(255, 199, 233, 249),
-      // ),
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: CurvedNavigationBar(
         index: _selectedIndex,

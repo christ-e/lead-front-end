@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 class FormBuilderImagePicker extends FormBuilderField<File> {
@@ -34,53 +33,66 @@ class FormBuilderImagePicker extends FormBuilderField<File> {
                           backgroundImage: FileImage(state.value!),
                         )
                       : CircleAvatar(
-                          radius: 70,
+                          radius: 60,
                           child: Icon(Icons.person),
                         ),
                   Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: IconButton(
-                      onPressed: () async {
-                        await showDialog(
-                          context: state.context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: Text('Pick an Image'),
-                              actions: [
-                                IconButton(
-                                  onPressed: () async {
-                                    final pickedFile = await ImagePicker()
-                                        .pickImage(source: ImageSource.camera);
-                                    if (pickedFile != null) {
-                                      state.didChange(File(pickedFile.path));
-                                    }
-                                    Navigator.of(context).pop();
+                      top: 70,
+                      bottom: 0,
+                      right: 0,
+                      left: 80,
+                      child: state.value == null
+                          ? IconButton(
+                              onPressed: () async {
+                                await showDialog(
+                                  context: state.context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: Text('Pick an Image'),
+                                      actions: [
+                                        IconButton(
+                                          onPressed: () async {
+                                            final pickedFile =
+                                                await ImagePicker().pickImage(
+                                                    source: ImageSource.camera);
+                                            if (pickedFile != null) {
+                                              state.didChange(
+                                                  File(pickedFile.path));
+                                            }
+                                            Navigator.of(context).pop();
+                                          },
+                                          icon: Icon(Icons.camera_alt),
+                                        ),
+                                        IconButton(
+                                          onPressed: () async {
+                                            final pickedFile =
+                                                await ImagePicker().pickImage(
+                                                    source:
+                                                        ImageSource.gallery);
+                                            if (pickedFile != null) {
+                                              state.didChange(
+                                                  File(pickedFile.path));
+                                            }
+                                            Navigator.of(context).pop();
+                                          },
+                                          icon: Icon(Icons.filter),
+                                        ),
+                                      ],
+                                    );
                                   },
-                                  icon: Icon(Icons.camera_alt),
-                                ),
-                                IconButton(
-                                  onPressed: () async {
-                                    final pickedFile = await ImagePicker()
-                                        .pickImage(source: ImageSource.gallery);
-                                    if (pickedFile != null) {
-                                      state.didChange(File(pickedFile.path));
-                                    }
-                                    Navigator.of(context).pop();
-                                  },
-                                  icon: Icon(Icons.filter),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                      icon: Icon(
-                        Icons.add_a_photo_outlined,
-                        size: 30,
-                      ),
-                    ),
-                  ),
+                                );
+                              },
+                              icon: Icon(
+                                Icons.add_a_photo_outlined,
+                                size: 30,
+                              ),
+                            )
+                          : IconButton(
+                              onPressed: () {
+                                // state.value.delete();
+                              },
+                              icon: Icon(Icons.highlight_remove_rounded,
+                                  size: 26))),
                 ],
               ),
             );

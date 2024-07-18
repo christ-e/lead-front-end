@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, deprecated_member_use, avoid_print, use_build_context_synchronously
 
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -9,6 +10,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/image_picker.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
 import 'package:lead_application/model/leadModel.dart';
@@ -16,6 +18,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   final Lead? lead; //add
@@ -87,60 +90,217 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     });
   }
 
-  Future<void> _submitForm(Map<String, dynamic> formDetails) async {
-    // Convert DateTime fields to strings
-    Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
+  // Future<void> _submitForm(Map<String, dynamic> formDetails) async {
+  //   Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
+  //     if (value is DateTime) {
+  //       return MapEntry(key, value.toIso8601String());
+  //     }
+  //     return MapEntry(key, value);
+  //   });
+
+  //   if (encodableFormDetails['image_path'] != null &&
+  //       encodableFormDetails['image_path'].isNotEmpty) {
+  //     List<File> images = List<File>.from(encodableFormDetails['image_path']);
+  //     encodableFormDetails['image_path'] = images.map((image) {
+  //       List<int> imageBytes = image.readAsBytesSync();
+  //       return base64Encode(imageBytes);
+  //     }).toList();
+  //   }
+
+  //   final response = await http.post(
+  //     Uri.parse('http://127.0.0.1:8000/api/store'),
+  //     headers: {
+  //       'Accept': 'application/json',
+  //       'Content-Type': 'application/json; charset=UTF-8',
+  //     },
+  //     body: jsonEncode(encodableFormDetails),
+  //   );
+
+  //   if (response.statusCode == 200 || response.statusCode == 201) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         duration: Duration(seconds: 1),
+  //         content: Text('Form submitted successfully'),
+  //         backgroundColor: Colors.green,
+  //       ),
+  //     );
+  //   } else if (response.statusCode == 422) {
+  //     final errors = jsonDecode(response.body)['errors'];
+  //     errors.forEach((field, messages) {
+  //       _formKey.currentState?.invalidateField(
+  //         name: field,
+  //         errorText: messages.join(', '),
+  //       );
+  //     });
+
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Validation errors occurred.'),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Failed to submit form'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //   }
+  // }
+  Future<void> _submitForm(
+      Map<String, dynamic> formDetails, BuildContext context) async {
+    Dio dio = Dio();
+
+    FormData formData = FormData();
+
+    formDetails.forEach((key, value) async {
       if (value is DateTime) {
-        return MapEntry(key, value.toIso8601String());
+        formData.fields.add(MapEntry(key, value.toIso8601String()));
+      } else if (value is List<File>) {
+        for (var file in value) {
+          formData.files.add(MapEntry(
+            key,
+            await MultipartFile.fromFile(file.path,
+                filename: file.path.split('/').last),
+          ));
+        }
+      } else {
+        formData.fields.add(MapEntry(key, value.toString()));
       }
-      return MapEntry(key, value);
     });
 
-    final response = await http.post(
-      Uri.parse('http://127.0.0.1:8000/api/store'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(encodableFormDetails),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      // Handle successful response
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Form submitted successfully'),
-          backgroundColor: Colors.green,
+    try {
+      Response response = await dio.post(
+        'http://127.0.0.1:8000/api/store',
+        data: formData,
+        options: Options(
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
         ),
       );
-      // Optionally, navigate to another screen
-    } else if (response.statusCode == 422) {
-      // Handle validation error response
-      final errors = jsonDecode(response.body)['errors'];
-      errors.forEach((field, messages) {
-        _formKey.currentState?.invalidateField(
-          name: field,
-          errorText: messages.join(', '),
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: 1),
+            content: Text('Form submitted successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
-      });
+      } else if (response.statusCode == 422) {
+        final errors = response.data['errors'];
+        errors.forEach((field, messages) {
+          _formKey.currentState?.invalidateField(
+            name: field,
+            errorText: messages.join(', '),
+          );
+        });
 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Validation errors occurred.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit form'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } on DioError catch (e) {
+      // Handle Dio errors, such as network errors
+      print('Dio error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Validation errors occurred.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    } else {
-      // Handle other error responses
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit form'),
+          content: Text('Failed to submit form: ${e.message}'),
           backgroundColor: Colors.red,
         ),
       );
-      // Optionally, show an error message
     }
   }
+  // Future<void> _ssubmitForm(
+  //     // BuildContext context,
+  //     Map<String, dynamic> formDetails) async {
+  //   Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
+  //     if (value is DateTime) {
+  //       return MapEntry(key, value.toIso8601String());
+  //     }
+  //     return MapEntry(key, value);
+  //   });
+
+  //   if (encodableFormDetails['image_path'] != null &&
+  //       encodableFormDetails['image_path'].isNotEmpty) {
+  //     List<File> images = List<File>.from(encodableFormDetails['image_path']);
+  //     encodableFormDetails['image_path'] = images.map((image) {
+  //       List<int> imageBytes = image.readAsBytesSync();
+  //       return base64Encode(imageBytes);
+  //     }).toList();
+  //   }
+
+  //   final uri = Uri.parse('http://127.0.0.1:8000/api/store');
+  //   final request = http.MultipartRequest('POST', uri)
+  //     ..headers.addAll({
+  //       'Accept': 'application/json',
+  //       'Content-Type': 'application/json; charset=UTF-8',
+  //     });
+
+  //   // Add fields to the request
+  //   request.fields['encodableFormDetails'] = jsonEncode(encodableFormDetails);
+
+  //   // Add files to the request
+  //   if (encodableFormDetails['image_path'] != null) {
+  //     List<String> imagePaths =
+  //         List<String>.from(encodableFormDetails['image_path']);
+  //     for (String path in imagePaths) {
+  //       request.files
+  //           .add(await http.MultipartFile.fromPath('image_path[]', path));
+  //     }
+  //   }
+
+  //   final response = await request.send();
+  //   final responseBody = await response.stream.bytesToString();
+
+  //   if (response.statusCode == 200 || response.statusCode == 201) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         duration: Duration(seconds: 1),
+  //         content: Text('Form submitted successfully'),
+  //         backgroundColor: Colors.green,
+  //       ),
+  //     );
+  //   } else if (response.statusCode == 422) {
+  //     final errors = jsonDecode(responseBody)['errors'];
+  //     errors.forEach((field, messages) {
+  //       _formKey.currentState?.invalidateField(
+  //         name: field,
+  //         errorText: messages.join(', '),
+  //       );
+  //     });
+
+  //     print(
+  //         'Validation errors: $errors'); // Add this line to print validation errors
+
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Validation errors occurred.'),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Failed to submit form'),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //   }
+  // }
 
   Future<void> _updateForm(Map<String, dynamic> formDetails) async {
     Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
@@ -152,6 +312,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
     final uri =
         Uri.parse('http://127.0.0.1:8000/api/lead_data/${widget.lead!.id}');
+    //  Uri.parse('${{ApiEndPoints.baseUrl}widget.lead!.id}');
 
     final response = await (http.put(
       uri,
@@ -208,11 +369,11 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   height: 5,
                 ),
                 FormBuilderImagePicker(
-                  name: "image",
+                  name: "image_path",
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.required(),
-                    FormBuilderValidators.minLength(3),
+                    //  FormBuilderValidators.required(),
                   ]),
+                  // initialValue: ,
                   //  key: _formKey,
                   enabled: true,
                   // initialValue: null,
@@ -386,6 +547,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     suffixIcon: IconButton(
                         onPressed: () async {
                           log(currentAddress);
+                          print(currentAddress);
                           _getCurrentLocation();
                           try {
                             Position position = await _determinePosition();
@@ -503,30 +665,33 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
                             final formDetails = _formKey.currentState!.value;
-                            print(formDetails);
-                            log(formDetails.toString());
-                            if (widget.lead != null) {
-                              _updateForm(formDetails);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BottomNav(),
-                                  ));
-                            } else {
-                              _submitForm(formDetails);
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BottomNav(),
-                                  ));
-                            }
+                            _submitForm(formDetails, context);
 
-                            print(jsonEncode(formDetails));
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BottomNav(),
-                                ));
+                            log(formDetails.toString());
+
+                            // if (widget.lead != null) {
+                            //   _updateForm(formDetails);
+                            //   Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => BottomNav(),
+                            //       ));
+                            // } else {
+                            //   _submitForm(formDetails);
+                            //   // Navigator.push(
+                            //   //     context,
+                            //   // MaterialPageRoute(
+                            //   //   builder: (context) => BottomNav(),
+                            //   // ));
+                            // }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to submit form'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            print("falied");
                           }
                         });
                       },
@@ -654,7 +819,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   Future<void> _fetchStates() async {
     final response =
-        await http.get(Uri.parse('http://127.0.0.1:8000/api/states'));
+        //await http.get(Uri.parse('http://127.0.0.1:8000/api/states'));
+        await http.get(Uri.parse(
+            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}'));
     if (response.statusCode == 200) {
       setState(() {
         _states = jsonDecode(response.body);
@@ -665,7 +832,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   Future<void> _fetchDistricts(String stateId) async {
     final response = await http
-        .get(Uri.parse('http://127.0.0.1:8000/api/districts/$stateId'));
+        //.get(Uri.parse('http://127.0.0.1:8000/api/districts/$stateId'));
+        .get(Uri.parse(
+            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchDistrict}$stateId'));
     if (response.statusCode == 200) {
       setState(() {
         _districts = jsonDecode(response.body);
@@ -676,7 +845,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   Future<void> _fetchCities(String districtId) async {
     final response = await http
-        .get(Uri.parse('http://127.0.0.1:8000/api/cities/$districtId'));
+        //  .get(Uri.parse('http://127.0.0.1:8000/api/cities/$districtId'));
+        .get(Uri.parse(
+            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchcity}$districtId'));
     if (response.statusCode == 200) {
       setState(() {
         _cities = jsonDecode(response.body);

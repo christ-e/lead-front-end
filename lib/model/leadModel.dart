@@ -6,6 +6,7 @@ class Lead {
   final String? address;
   final String? email;
   final int? whatsapp;
+  final String? image_path;
   final String? state_name;
   final String? state_id;
   final String? district_name;
@@ -25,6 +26,7 @@ class Lead {
     this.address,
     this.email,
     this.whatsapp,
+    this.image_path,
     this.state_name,
     this.district_name,
     this.city_name,
@@ -54,9 +56,9 @@ class Lead {
       district_id: json['district'],
       city_id: json['city'],
       locationCoordinates: json['location_coordinates'],
-      // current_location: json['current_location'],
       leadPriority: json['lead_priority'],
       followUp: json['follow_up'],
+      image_path: json['image_path'],
       follow_up_date: json['follow_up_date'],
     );
   }
