@@ -1,9 +1,8 @@
-// ignore_for_file: prefer_const_constructors, prefer_final_fields
-
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/list_deatils_screen.dart';
+import 'package:lead_application/create/screen/homeScreen/mapScreen/mapScreen.dart';
 
 class BottomNav extends StatefulWidget {
   @override
@@ -13,9 +12,10 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   int _selectedIndex = 0;
 
-  static List<Widget> _widgetOptions = <Widget>[
+  final List<Widget> _widgetOptions = const <Widget>[
     ListScreen(),
     AddDetailsScreen(),
+    MapScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,18 +31,20 @@ class _BottomNavState extends State<BottomNav> {
       bottomNavigationBar: CurvedNavigationBar(
         index: _selectedIndex,
         height: 60.0,
-        items: <Widget>[
+        items: const <Widget>[
           Icon(Icons.list_alt, size: 30),
           Icon(Icons.add_chart_outlined, size: 30),
+          Image(
+            image: AssetImage("assets/images/map_icon.png"),
+            height: 35,
+          )
         ],
         color: Colors.white,
         buttonBackgroundColor: Colors.white,
-        backgroundColor: const Color.fromARGB(255, 137, 180, 255),
+        backgroundColor: Color.fromARGB(255, 137, 180, 255),
         animationCurve: Curves.easeInOut,
-        animationDuration: Duration(milliseconds: 600),
-        onTap: (index) {
-          _onItemTapped(index);
-        },
+        animationDuration: const Duration(milliseconds: 600),
+        onTap: _onItemTapped,
         letIndexChange: (index) => true,
       ),
     );

@@ -1,6 +1,6 @@
 // ignore_for_file: file_names, non_constant_identifier_names
 class Lead {
-  final int id;
+  final int? id;
   final String? name;
   final String? contactNumber;
   final String? address;
@@ -14,13 +14,14 @@ class Lead {
   final String? city_name;
   final String? city_id;
   final String? locationCoordinates;
-  // final String? current_location;
+  final double? location_lat;
+  final double? location_log;
   final String? leadPriority;
   final String? followUp;
   final String? follow_up_date;
 
   Lead({
-    required this.id,
+    this.id,
     this.name,
     this.contactNumber,
     this.address,
@@ -34,12 +35,12 @@ class Lead {
     this.district_id,
     this.city_id,
     this.locationCoordinates,
-    // this.current_location,
+    this.location_lat,
+    this.location_log,
     this.leadPriority,
     this.followUp,
     this.follow_up_date,
   });
-  // "district_name": "Kollam",
 
   factory Lead.fromJson(Map<String, dynamic> json) {
     return Lead(
@@ -56,6 +57,8 @@ class Lead {
       district_id: json['district'],
       city_id: json['city'],
       locationCoordinates: json['location_coordinates'],
+      location_lat: json['location_lat'],
+      location_log: json['location_log'],
       leadPriority: json['lead_priority'],
       followUp: json['follow_up'],
       image_path: json['image_path'],

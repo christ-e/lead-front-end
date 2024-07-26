@@ -10,15 +10,16 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
-import 'package:lead_application/create/screen/homeScreen/editScreen/image_picker.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
 import 'package:lead_application/model/leadModel.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
-import 'package:dio/dio.dart';
+import 'package:flutter_animated_button/flutter_animated_button.dart';
+import 'package:file_picker/file_picker.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   final Lead? lead; //add
@@ -32,6 +33,9 @@ class AddDetailsScreen extends StatefulWidget {
 class _AddDetailsScreenState extends State<AddDetailsScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   String _location = '';
+  String _lat = '';
+  String _log = '';
+  bool isButtonSelected = false;
 
   List<dynamic> _states = [];
   List<dynamic> _districts = [];
@@ -70,13 +74,14 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
         'district': lead.district_name ?? '',
         'city': lead.city_name ?? '',
         'location_coordinates': lead.locationCoordinates ?? '',
+        'location_lat': lead.location_lat ?? '',
+        'location_log': lead.location_log ?? '',
         'lead_priority': lead.leadPriority ?? '',
         'follow_up': lead.followUp ?? false,
         'follow_up_date': lead.follow_up_date != null
             ? DateTime.parse(lead.follow_up_date!)
             : null,
       });
-
       _selectedState = lead.state_name;
       _selectedDistrict = lead.district_name;
       _selectedCity = lead.city_name;
@@ -90,220 +95,120 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     });
   }
 
-  // Future<void> _submitForm(Map<String, dynamic> formDetails) async {
-  //   Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
-  //     if (value is DateTime) {
-  //       return MapEntry(key, value.toIso8601String());
-  //     }
-  //     return MapEntry(key, value);
-  //   });
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
 
-  //   if (encodableFormDetails['image_path'] != null &&
-  //       encodableFormDetails['image_path'].isNotEmpty) {
-  //     List<File> images = List<File>.from(encodableFormDetails['image_path']);
-  //     encodableFormDetails['image_path'] = images.map((image) {
-  //       List<int> imageBytes = image.readAsBytesSync();
-  //       return base64Encode(imageBytes);
-  //     }).toList();
-  //   }
+  Future<void> _pickImageGallary() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
-  //   final response = await http.post(
-  //     Uri.parse('http://127.0.0.1:8000/api/store'),
-  //     headers: {
-  //       'Accept': 'application/json',
-  //       'Content-Type': 'application/json; charset=UTF-8',
-  //     },
-  //     body: jsonEncode(encodableFormDetails),
-  //   );
-
-  //   if (response.statusCode == 200 || response.statusCode == 201) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         duration: Duration(seconds: 1),
-  //         content: Text('Form submitted successfully'),
-  //         backgroundColor: Colors.green,
-  //       ),
-  //     );
-  //   } else if (response.statusCode == 422) {
-  //     final errors = jsonDecode(response.body)['errors'];
-  //     errors.forEach((field, messages) {
-  //       _formKey.currentState?.invalidateField(
-  //         name: field,
-  //         errorText: messages.join(', '),
-  //       );
-  //     });
-
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('Validation errors occurred.'),
-  //         backgroundColor: Colors.orange,
-  //       ),
-  //     );
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('Failed to submit form'),
-  //         backgroundColor: Colors.red,
-  //       ),
-  //     );
-  //   }
-  // }
-  Future<void> _submitForm(
-      Map<String, dynamic> formDetails, BuildContext context) async {
-    Dio dio = Dio();
-
-    FormData formData = FormData();
-
-    formDetails.forEach((key, value) async {
-      if (value is DateTime) {
-        formData.fields.add(MapEntry(key, value.toIso8601String()));
-      } else if (value is List<File>) {
-        for (var file in value) {
-          formData.files.add(MapEntry(
-            key,
-            await MultipartFile.fromFile(file.path,
-                filename: file.path.split('/').last),
-          ));
-        }
-      } else {
-        formData.fields.add(MapEntry(key, value.toString()));
-      }
-    });
-
-    try {
-      Response response = await dio.post(
-        'http://127.0.0.1:8000/api/store',
-        data: formData,
-        options: Options(
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-        ),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: Duration(seconds: 1),
-            content: Text('Form submitted successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else if (response.statusCode == 422) {
-        final errors = response.data['errors'];
-        errors.forEach((field, messages) {
-          _formKey.currentState?.invalidateField(
-            name: field,
-            errorText: messages.join(', '),
-          );
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Validation errors occurred.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to submit form'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } on DioError catch (e) {
-      // Handle Dio errors, such as network errors
-      print('Dio error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit form: ${e.message}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
     }
   }
-  // Future<void> _ssubmitForm(
-  //     // BuildContext context,
-  //     Map<String, dynamic> formDetails) async {
-  //   Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
-  //     if (value is DateTime) {
-  //       return MapEntry(key, value.toIso8601String());
-  //     }
-  //     return MapEntry(key, value);
-  //   });
 
-  //   if (encodableFormDetails['image_path'] != null &&
-  //       encodableFormDetails['image_path'].isNotEmpty) {
-  //     List<File> images = List<File>.from(encodableFormDetails['image_path']);
-  //     encodableFormDetails['image_path'] = images.map((image) {
-  //       List<int> imageBytes = image.readAsBytesSync();
-  //       return base64Encode(imageBytes);
-  //     }).toList();
-  //   }
+  Future<void> _pickImageCamera() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
 
-  //   final uri = Uri.parse('http://127.0.0.1:8000/api/store');
-  //   final request = http.MultipartRequest('POST', uri)
-  //     ..headers.addAll({
-  //       'Accept': 'application/json',
-  //       'Content-Type': 'application/json; charset=UTF-8',
-  //     });
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
 
-  //   // Add fields to the request
-  //   request.fields['encodableFormDetails'] = jsonEncode(encodableFormDetails);
+    Future<void> _pickImageFile() async {
+      // Open file picker
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image, // Restrict to images
+      );
 
-  //   // Add files to the request
-  //   if (encodableFormDetails['image_path'] != null) {
-  //     List<String> imagePaths =
-  //         List<String>.from(encodableFormDetails['image_path']);
-  //     for (String path in imagePaths) {
-  //       request.files
-  //           .add(await http.MultipartFile.fromPath('image_path[]', path));
-  //     }
-  //   }
+      if (result != null) {
+        // Get the file
+        PlatformFile file = result.files.first;
+        setState(() {
+          _image = File(file.path!);
+        });
+      }
+    }
+  }
 
-  //   final response = await request.send();
-  //   final responseBody = await response.stream.bytesToString();
+  Future<void> _submitForm(formKey, _location) async {
+    var request = http.MultipartRequest(
+        'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
 
-  //   if (response.statusCode == 200 || response.statusCode == 201) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         duration: Duration(seconds: 1),
-  //         content: Text('Form submitted successfully'),
-  //         backgroundColor: Colors.green,
-  //       ),
-  //     );
-  //   } else if (response.statusCode == 422) {
-  //     final errors = jsonDecode(responseBody)['errors'];
-  //     errors.forEach((field, messages) {
-  //       _formKey.currentState?.invalidateField(
-  //         name: field,
-  //         errorText: messages.join(', '),
-  //       );
-  //     });
+    request.fields['name'] = formKey['name'] ?? "";
+    request.fields['contact_number'] = formKey['contact_number'] ?? "";
+    request.fields['whats_app'] = formKey['whats_app'] ? '1' : '0';
 
-  //     print(
-  //         'Validation errors: $errors'); // Add this line to print validation errors
+    request.fields['email'] = formKey['email'] ?? "";
+    request.fields['address'] = formKey['address'] ?? "";
+    request.fields['state'] = formKey['state'];
+    request.fields['district'] = formKey['district'];
+    request.fields['city'] = formKey['city'];
+    request.fields['location_coordinates'] =
+        formKey['location_coordinates'] ?? "";
+    request.fields['location_lat'] = _lat;
+    request.fields['location_log'] = _log;
+    request.fields['follow_up'] = formKey['follow_up'];
+    request.fields['follow_up_date'] =
+        (formKey['follow_up_date'] as DateTime?)?.toIso8601String() ?? '';
+    request.fields['lead_priority'] = formKey['lead_priority'] ?? "";
 
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('Validation errors occurred.'),
-  //         backgroundColor: Colors.orange,
-  //       ),
-  //     );
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('Failed to submit form'),
-  //         backgroundColor: Colors.red,
-  //       ),
-  //     );
-  //   }
-  // }
+    if (_image != null) {
+      var file = await http.MultipartFile.fromPath('image_path', _image!.path);
+      request.files.add(file);
+    }
 
-  Future<void> _updateForm(Map<String, dynamic> formDetails) async {
-    Map<String, dynamic> encodableFormDetails = formDetails.map((key, value) {
+    var response = await request.send();
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      print("Request successful");
+      _showAlertDialog(context, 'Success', 'Form submitted successfully');
+    } else {
+      print("Request failed with status: ${response.statusCode}");
+      var responseBody = await response.stream.bytesToString();
+      print("Response body: $responseBody");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Form submission failed')));
+      // _showAlertDialog(context, 'Error', 'Form submission failed');
+      _showAlertDialog(context, 'Error', 'Form submission failed');
+    }
+  }
+
+  void _showAlertDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Future.delayed(Duration(seconds: 2), () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BottomNav(),
+                    ),
+                  );
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updateForm(Map<String, dynamic> formKey) async {
+    Map<String, dynamic> encodableFormDetails = formKey.map((key, value) {
       if (value is DateTime) {
         return MapEntry(key, value.toIso8601String());
       }
@@ -312,7 +217,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
     final uri =
         Uri.parse('http://127.0.0.1:8000/api/lead_data/${widget.lead!.id}');
-    //  Uri.parse('${{ApiEndPoints.baseUrl}widget.lead!.id}');
 
     final response = await (http.put(
       uri,
@@ -328,7 +232,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       Fluttertoast.showToast(
         msg: 'Lead Updated successfully',
         toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
+        gravity: ToastGravity.BOTTOM_LEFT,
         timeInSecForIosWeb: 1,
         backgroundColor: Colors.green,
         textColor: Colors.white,
@@ -354,6 +258,11 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var submitTextStyle = TextStyle(
+        fontSize: 18,
+        letterSpacing: 2,
+        color: Colors.black,
+        fontWeight: FontWeight.w300);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.lead != null ? 'Edit Lead Details' : 'Add Details'),
@@ -368,15 +277,158 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 SizedBox(
                   height: 5,
                 ),
-                FormBuilderImagePicker(
-                  name: "image_path",
-                  validator: FormBuilderValidators.compose([
-                    //  FormBuilderValidators.required(),
-                  ]),
-                  // initialValue: ,
-                  //  key: _formKey,
-                  enabled: true,
-                  // initialValue: null,
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundImage:
+                          _image != null ? FileImage(_image!) : null,
+                      child: _image == null
+                          ? IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text("Add Photo"),
+                                      actions: [
+                                        IconButton(
+                                          onPressed: () {
+                                            _pickImageCamera();
+                                            Navigator.of(context).pop();
+                                          },
+                                          icon: const Column(
+                                            children: [
+                                              Icon(Icons.camera),
+                                              Text("Camera")
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        IconButton(
+                                          onPressed: () {
+                                            _pickImageGallary();
+                                            Navigator.of(context).pop();
+                                          },
+                                          icon: const Column(
+                                            children: [
+                                              Icon(Icons.image),
+                                              Text("Image")
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 20),
+                                        IconButton(
+                                          onPressed: () async {
+                                            final pickedFile =
+                                                await _picker.pickImage(
+                                                    source:
+                                                        ImageSource.gallery);
+
+                                            if (pickedFile != null) {
+                                              setState(() {
+                                                _image = File(pickedFile.path);
+                                              });
+                                            } else {
+                                              print('No image selected.');
+                                            }
+                                            Navigator.of(context).pop();
+                                          },
+                                          icon: const Column(
+                                            children: [
+                                              Icon(Icons.folder_copy_rounded),
+                                              Text("Files")
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                              icon: Icon(Icons.add_a_photo_rounded),
+                              iconSize: 30,
+                            )
+                          : null,
+                    ),
+                    if (_image != null)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        top: 100,
+                        left: 100,
+                        child: IconButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Edit Photo"),
+                                  actions: [
+                                    IconButton(
+                                      onPressed: () {
+                                        _pickImageCamera();
+                                        Navigator.of(context).pop();
+                                      },
+                                      icon: const Column(
+                                        children: [
+                                          Icon(Icons.camera),
+                                          Text("Camera")
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    IconButton(
+                                      onPressed: () {
+                                        _pickImageGallary();
+                                        Navigator.of(context).pop();
+                                      },
+                                      icon: const Column(
+                                        children: [
+                                          Icon(Icons.image),
+                                          Text("Image")
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    IconButton(
+                                      onPressed: () async {
+                                        final pickedFile =
+                                            await _picker.pickImage(
+                                                source: ImageSource.gallery);
+
+                                        if (pickedFile != null) {
+                                          setState(() {
+                                            _image = File(pickedFile.path);
+                                          });
+                                        } else {
+                                          print('No image selected.');
+                                        }
+                                        Navigator.of(context).pop();
+                                      },
+                                      icon: const Column(
+                                        children: [
+                                          Icon(Icons.folder_copy_rounded),
+                                          Text("Files")
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          icon: Icon(
+                            Icons.edit,
+                            color: Colors.black,
+                          ),
+                          color: Colors.white,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 15,
                 ),
                 const SizedBox(height: 15),
                 FormBuilderTextField(
@@ -400,14 +452,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(),
                     FormBuilderValidators.numeric(),
-                    // (val) {
-                    //   if (val == null ||
-                    //       !RegExp(r'^(\+91|0)?[789]\d{9}$').hasMatch(val) ||
-                    //       !RegExp(r'^[789]\d{9}$').hasMatch(val)) {
-                    //     return 'Please enter a valid phone number';
-                    //   }
-                    //   return null;
-                    // },
+                    // FormBuilderValidators.max(12),
+                    // FormBuilderValidators.min(10),
                   ]),
                   name: "contact_number",
                   initialValue: widget.lead?.contactNumber,
@@ -541,12 +587,14 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 FormBuilderTextField(
                   readOnly: true,
                   name: 'location_coordinates',
+                  //  initialValue: widget.lead?.locationCoordinates,
                   initialValue: widget.lead?.locationCoordinates,
                   decoration: InputDecoration(
                     icon: Icon(Icons.location_on, color: Colors.blue),
                     suffixIcon: IconButton(
                         onPressed: () async {
-                          log(currentAddress);
+                          log(_location);
+                          //log(currentPosition.toString());
                           print(currentAddress);
                           _getCurrentLocation();
                           try {
@@ -644,46 +692,46 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _formKey.currentState!.reset();
-                            _formKey.currentState!.fields["state"]!
-                                .didChange(null);
-                            _formKey.currentState!.fields["lead_priority"]!
-                                .didChange(null);
-                            _formKey.currentState!.fields["follow_up"]!
-                                .didChange(null);
-                            _formKey.currentState!.fields["follow_up_date"]!
-                                .didChange(null);
-                          });
-                        },
-                        child: Text("Clear")),
-                    ElevatedButton(
-                      onPressed: () {
+                    AnimatedButton(
+                      onPress: () {
+                        setState(() {
+                          _formKey.currentState!.reset();
+                          _formKey.currentState!.fields["state"]!
+                              .didChange(null);
+                          _formKey.currentState!.fields["lead_priority"]!
+                              .didChange(null);
+                          _formKey.currentState!.fields["follow_up"]!
+                              .didChange(null);
+                          _formKey.currentState!.fields["follow_up_date"]!
+                              .didChange(null);
+                        });
+                      },
+                      width: 120,
+                      height: 50,
+                      text: 'CLEAR',
+                      isReverse: true,
+                      selectedTextColor: Colors.lightBlue.shade200,
+                      transitionType: TransitionType.TOP_CENTER_ROUNDER,
+                      textStyle: submitTextStyle,
+                      backgroundColor: Colors.blue.shade200,
+                      borderColor: Colors.white,
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      animatedOn: AnimatedOn.onTap,
+                    ),
+                    AnimatedButton(
+                      onPress: () {
                         setState(() {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
-                            final formDetails = _formKey.currentState!.value;
-                            _submitForm(formDetails, context);
+                            final formKey = _formKey.currentState!.value;
 
-                            log(formDetails.toString());
-
-                            // if (widget.lead != null) {
-                            //   _updateForm(formDetails);
-                            //   Navigator.push(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) => BottomNav(),
-                            //       ));
-                            // } else {
-                            //   _submitForm(formDetails);
-                            //   // Navigator.push(
-                            //   //     context,
-                            //   // MaterialPageRoute(
-                            //   //   builder: (context) => BottomNav(),
-                            //   // ));
-                            // }
+                            if (widget.lead != null) {
+                              _updateForm(formKey);
+                            } else {
+                              log(formKey.toString());
+                              _submitForm(formKey, _location);
+                            }
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -691,11 +739,22 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                                 backgroundColor: Colors.red,
                               ),
                             );
-                            print("falied");
+                            print("Failed");
                           }
                         });
                       },
-                      child: Text(widget.lead != null ? 'Update' : 'Submit'),
+                      width: 120, // Adjusted width
+                      height: 50,
+                      text: widget.lead != null ? 'UPDATE' : 'SUBMIT',
+                      isReverse: true,
+                      selectedTextColor: Colors.black,
+                      transitionType: TransitionType.TOP_CENTER_ROUNDER,
+                      textStyle: submitTextStyle,
+                      backgroundColor: Colors.blue.shade200,
+                      borderColor: Colors.white,
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      animatedOn: AnimatedOn.onHover,
                     ),
                   ],
                 ),
@@ -818,10 +877,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   }
 
   Future<void> _fetchStates() async {
-    final response =
-        //await http.get(Uri.parse('http://127.0.0.1:8000/api/states'));
-        await http.get(Uri.parse(
-            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}'));
+    final response = await http.get(Uri.parse(
+        '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}'));
     if (response.statusCode == 200) {
       setState(() {
         _states = jsonDecode(response.body);
@@ -831,10 +888,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   }
 
   Future<void> _fetchDistricts(String stateId) async {
-    final response = await http
-        //.get(Uri.parse('http://127.0.0.1:8000/api/districts/$stateId'));
-        .get(Uri.parse(
-            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchDistrict}$stateId'));
+    final response = await http.get(Uri.parse(
+        '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchDistrict}$stateId'));
     if (response.statusCode == 200) {
       setState(() {
         _districts = jsonDecode(response.body);
@@ -844,10 +899,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   }
 
   Future<void> _fetchCities(String districtId) async {
-    final response = await http
-        //  .get(Uri.parse('http://127.0.0.1:8000/api/cities/$districtId'));
-        .get(Uri.parse(
-            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchcity}$districtId'));
+    final response = await http.get(Uri.parse(
+        '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchcity}$districtId'));
     if (response.statusCode == 200) {
       setState(() {
         _cities = jsonDecode(response.body);
@@ -889,8 +942,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     Position position = await Geolocator.getCurrentPosition();
     setState(() {
       _location = 'Lat: ${position.latitude}, Long: ${position.longitude}';
+      _lat = position.latitude.toString();
+      _log = position.longitude.toString();
     });
-    _formKey.currentState?.fields['location_coordinates']?.didChange(_location);
-    print(_location);
   }
 }

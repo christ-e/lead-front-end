@@ -14,7 +14,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-        child:
-            MaterialApp(debugShowCheckedModeBanner: false, home: BottomNav()));
+        child: MaterialApp(debugShowCheckedModeBanner: false, home: BottomNav()
+            // home: LeadForm(),
+            ));
   }
 }

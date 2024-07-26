@@ -9,6 +9,8 @@
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
+
+
 <queries>
   <!-- If your app checks for SMS support -->
   <intent>
@@ -46,6 +48,11 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <meta-data
+              android:name="com.mapmyindia.sdk.apikey"
+              android:value="092687bde0df9929d798b1e1ceafc46d" />
+
+              
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -56,6 +63,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="com.mapmyindia.sdk.apikey"
+            android:value="092687bde0df9929d798b1e1ceafc46d" />
+
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and

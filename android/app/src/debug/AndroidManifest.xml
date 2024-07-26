@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <application>
+        <meta-data
+            android:name="com.mapmyindia.sdk.apikey"
+            android:value="092687bde0df9929d798b1e1ceafc46d" />
+    </application>
 </manifest>
