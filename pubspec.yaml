@@ -57,6 +57,10 @@ dependencies:
   flutter_animated_button: ^2.0.3
   file_picker: ^5.0.1
   mapmyindia_gl: ^0.3.2
+  google_maps_flutter: ^2.2.8
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  # location: ^7.0.0
 
 dev_dependencies:
   flutter_test:

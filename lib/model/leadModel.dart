@@ -14,8 +14,8 @@ class Lead {
   final String? city_name;
   final String? city_id;
   final String? locationCoordinates;
-  final double? location_lat;
-  final double? location_log;
+  final String? location_lat;
+  final String? location_log;
   final String? leadPriority;
   final String? followUp;
   final String? follow_up_date;

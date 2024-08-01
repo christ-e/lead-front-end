@@ -107,7 +107,7 @@ class ListScreen extends ConsumerWidget {
     }
 
     final leadsAsyncValue = ref.watch(leadsProvider);
-    int i = 1;
+
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 233, 251, 255),
       appBar: AppBar(

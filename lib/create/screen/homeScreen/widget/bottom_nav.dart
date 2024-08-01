@@ -1,8 +1,9 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
+import 'package:lead_application/create/screen/homeScreen/googlemap/googlemap.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/list_deatils_screen.dart';
-import 'package:lead_application/create/screen/homeScreen/mapScreen/mapScreen.dart';
+import 'package:lead_application/create/screen/homeScreen/oflineScreen/offlineScreen.dart';
 
 class BottomNav extends StatefulWidget {
   @override
@@ -12,10 +13,12 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   int _selectedIndex = 0;
 
-  final List<Widget> _widgetOptions = const <Widget>[
+  final List<Widget> _widgetOptions = <Widget>[
     ListScreen(),
     AddDetailsScreen(),
-    MapScreen(),
+    Offlinescreen(),
+    // MapScreen(),
+    GoogleMapScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -34,10 +37,11 @@ class _BottomNavState extends State<BottomNav> {
         items: const <Widget>[
           Icon(Icons.list_alt, size: 30),
           Icon(Icons.add_chart_outlined, size: 30),
+          Icon(Icons.wifi_off, size: 30),
           Image(
             image: AssetImage("assets/images/map_icon.png"),
             height: 35,
-          )
+          ),
         ],
         color: Colors.white,
         buttonBackgroundColor: Colors.white,

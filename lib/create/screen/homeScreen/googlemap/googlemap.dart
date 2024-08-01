@@ -1,26 +1,29 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:lead_application/model/leadModel.dart';
-import 'package:mapmyindia_gl/mapmyindia_gl.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
+import 'package:lead_application/model/leadModel.dart';
 
-class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+class GoogleMapScreen extends StatefulWidget {
+  const GoogleMapScreen({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  State<GoogleMapScreen> createState() => _GoogleMapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
-  late MapmyIndiaMapController _mapController;
+class _GoogleMapScreenState extends State<GoogleMapScreen> {
+  late GoogleMapController _mapController;
   List<Lead> leads = [];
-  late Symbol _currentLocationMarker;
+  late Marker _currentLocationMarker;
   late LatLng _currentLatLng;
-  Lead lead = Lead();
-  Map<Symbol, Lead> _markerLeadMap = {}; // Map to associate markers with leads
   Lead? _selectedLead; // To store the currently selected lead
+
+  Map<MarkerId, Lead> _markerLeadMap =
+      {}; // Map to associate markers with leads
+  Set<Marker> _markers = {};
+  Set<Polyline> _polylines = {};
 
   @override
   void initState() {
@@ -29,13 +32,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _initializeMap() {
-    MapmyIndiaAccountManager.setMapSDKKey('092687bde0df9929d798b1e1ceafc46d');
-    MapmyIndiaAccountManager.setRestAPIKey('092687bde0df9929d798b1e1ceafc46d');
-    MapmyIndiaAccountManager.setAtlasClientId(
-        '96dHZVzsAuvbhuzGkwF-OQJ6j6IWRyqCoaQudy9pQ9Nu8r8EYryJmqqQ-ble0SHjnakEuHnq7iwgmb19ibIuCg==');
-    MapmyIndiaAccountManager.setAtlasClientSecret(
-        'lrFxI-iSEg_n5Ei3B-_HW9lCAL22Bt9LcQhtflLilZS5b7lLymqZYTHW1FvE_Nonx9iGbJ6Le8aTnn0xhMRHykl73Yl1RExg');
-
     _fetchLeads();
     _checkLocationPermission();
   }
@@ -52,8 +48,11 @@ class _MapScreenState extends State<MapScreen> {
 
       for (var lead in leads) {
         if (lead.location_lat != null && lead.location_log != null) {
-          _addMarker(double.parse(lead.location_lat!),
-              double.parse(lead.location_log!), lead);
+          _addMarker(
+            double.parse(lead.location_lat!),
+            double.parse(lead.location_log!),
+            lead,
+          );
         }
       }
     } else {
@@ -71,22 +70,25 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _getCurrentLocation() async {
     Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
     setState(() {
       _currentLatLng = LatLng(position.latitude, position.longitude);
     });
 
-    _mapController.moveCamera(
-      CameraUpdate.newLatLng(
-        _currentLatLng,
-      ),
+    _mapController.animateCamera(
+      CameraUpdate.newLatLng(_currentLatLng),
     );
 
-    _currentLocationMarker = await _mapController.addSymbol(SymbolOptions(
-      geometry: _currentLatLng,
-      // iconImage: 'assets/images/location_pin_icon.png',
-      iconSize: 0.3,
-    ));
+    setState(() {
+      _currentLocationMarker = Marker(
+        markerId: MarkerId('currentLocation'),
+        position: _currentLatLng,
+        icon: BitmapDescriptor.defaultMarker,
+      );
+      _markers.add(_currentLocationMarker);
+    });
 
     _startLocationUpdates();
   }
@@ -100,94 +102,31 @@ class _MapScreenState extends State<MapScreen> {
     ).listen((Position position) {
       setState(() {
         _currentLatLng = LatLng(position.latitude, position.longitude);
-        _mapController.moveCamera(
-          CameraUpdate.newLatLng(
-            _currentLatLng,
-          ),
+        _mapController.animateCamera(
+          CameraUpdate.newLatLng(_currentLatLng),
         );
-        _mapController.updateSymbol(
-          _currentLocationMarker,
-          SymbolOptions(
-            geometry: _currentLatLng,
-          ),
+
+        _markers.removeWhere(
+            (marker) => marker.markerId.value == 'currentLocation');
+        _currentLocationMarker = Marker(
+          markerId: MarkerId('currentLocation'),
+          position: _currentLatLng,
+          icon: BitmapDescriptor.defaultMarker,
         );
+        _markers.add(_currentLocationMarker);
       });
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Leads Location'),
-      ),
-      body: MapmyIndiaMap(
-        initialCameraPosition: CameraPosition(
-          target: LatLng(10.0109851, 76.3132312),
-          zoom: 13,
-        ),
-        onMapCreated: (mapController) {
-          _mapController = mapController;
-        },
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(top: 100),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              onPressed: () {
-                _showOptions();
-              },
-              backgroundColor: Colors.white,
-              child: Icon(Icons.more_vert),
-            ),
-            SizedBox(
-              height: 20,
-            ),
-            FloatingActionButton(
-              onPressed: () {
-                // _fetchRoute(
-                //   LatLng(_currentLocationMarker.options.geometry!.latitude,
-                //       _currentLocationMarker.options.geometry!.longitude),
-                //   // LatLng(double.parse(lead.location_lat!),
-                //   //     double.parse(lead.location_log!)),
-                //   LatLng(10.0109851,
-                //       76.3132312), // Replace with the destination coordinates
-                // );
-                // _fetchRoute(
-                //   _currentLatLng,
-                //   LatLng(
-                //     double.parse(_selectedLead!.location_lat ?? '0'),
-                //     double.parse(_selectedLead!.location_log ?? '0'),
-                //   ),
-                // );
-              },
-              backgroundColor: Colors.white,
-              child: Icon(Icons.directions),
-            ),
-            SizedBox(
-              height: 20,
-            ),
-            FloatingActionButton(
-                onPressed: () {},
-                backgroundColor: Colors.lightBlue.shade100,
-                child: Icon(Icons.gps_fixed_outlined)),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _fetchRoute(LatLng start, LatLng end) async {
     final response = await http.get(Uri.parse(
-      'https://apis.mapmyindia.com/advancedmaps/v1/092687bde0df9929d798b1e1ceafc46d/route_adv/driving/${76.31767},${10.01091212};${76.31632365},${10.01011112}?geometries=polyline&overview=full',
+      'https://maps.googleapis.com/maps/api/directions/json?origin=${10.01011112},${76.31632365}&destination=${10.01091212},${76.31767}&key=AIzaSyAiJiOJZivORC1G7EBzmui4xZWEiyoea6A',
     ));
-
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
-      final String encodedPolyline = data['routes'][0]['geometry'];
-      final List<LatLng> routeCoordinates = decodePolyline(encodedPolyline);
+      final String encodedPolyline =
+          data['routes'][0]['overview_polyline']['points'];
+      final List<LatLng> routeCoordinates = _decodePolyline(encodedPolyline);
 
       _addRouteToMap(routeCoordinates);
     } else {
@@ -195,7 +134,7 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  List<LatLng> decodePolyline(String encoded) {
+  List<LatLng> _decodePolyline(String encoded) {
     List<LatLng> poly = [];
     int index = 0, len = encoded.length;
     int lat = 0, lng = 0;
@@ -226,27 +165,46 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _addRouteToMap(List<LatLng> routeCoordinates) {
-    _mapController.addLine(LineOptions(
-      geometry: routeCoordinates,
-      lineColor: "#ff0000",
-      lineWidth: 5.0,
-      lineOpacity: 0.8,
-    ));
+    final polyline = Polyline(
+      polylineId: PolylineId('route'),
+      points: routeCoordinates,
+      color: Colors.red,
+      width: 5,
+    );
+
+    setState(() {
+      _polylines.add(polyline);
+    });
   }
 
-  void _addMarker(double lat, double lon, Lead lead) async {
-    Symbol symbol = await _mapController.addSymbol(
-        SymbolOptions(
-            geometry: LatLng(lat, lon),
-            iconImage: 'assets/images/red_location.png',
-            iconSize: 0.6,
-            textField: lead.name,
-            textSize: 20,
-            textAnchor: "right"),
-        _markerLeadMap);
+  void _addMarker(double lat, double lon, Lead lead) {
+    final marker = Marker(
+      markerId: MarkerId(lead.id.toString()),
+      position: LatLng(lat, lon),
+      infoWindow: InfoWindow(
+        title: lead.name,
+        snippet: lead.address,
+        onTap: () => _onMarkerTapped(lead),
+      ),
+      icon: BitmapDescriptor.defaultMarkerWithHue(lead.leadPriority == "Warm"
+          ? BitmapDescriptor.hueOrange
+          : lead.leadPriority == "Hot"
+              ? BitmapDescriptor.hueRed
+              : BitmapDescriptor.hueBlue),
+    );
+
+    setState(() {
+      _markers.add(marker);
+      _markerLeadMap[marker.markerId] = lead;
+    });
+  }
+
+  void _onMarkerTapped(Lead lead) {
+    setState(() {
+      _selectedLead = lead;
+    });
+
     _showDetails(lead);
-    // Associate the marker with its lead
-    _markerLeadMap[symbol] = lead;
   }
 
   void _showDetails(Lead lead) {
@@ -263,7 +221,6 @@ class _MapScreenState extends State<MapScreen> {
               Text('Contact: ${lead.contactNumber}'),
               Text('Address: ${lead.address}'),
               Text('Location: ${lead.locationCoordinates}'),
-              Text('Coordinates: ${lead.location_lat}, ${lead.location_log}'),
             ],
           ),
           actions: [
@@ -319,6 +276,70 @@ class _MapScreenState extends State<MapScreen> {
           ),
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Leads Location'),
+      ),
+      body: GoogleMap(
+        // mapType: MapType.satellite,
+        myLocationButtonEnabled: true,
+        myLocationEnabled: true,
+        initialCameraPosition: CameraPosition(
+          target: LatLng(10.0109851, 76.3132312),
+          zoom: 13,
+        ),
+        onMapCreated: (GoogleMapController controller) {
+          _mapController = controller;
+        },
+        markers: _markers,
+        polylines: _polylines,
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              _showOptions();
+            },
+            backgroundColor: Colors.white,
+            child: Icon(Icons.more_vert),
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              if (_selectedLead != null) {
+                _fetchRoute(
+                  _currentLatLng, // Current location
+                  LatLng(10.0109851, 76.3132312
+                      // double.parse(_selectedLead!.location_lat ?? '0'),
+                      // double.parse(_selectedLead!.location_log ?? '0'),
+                      ), // Destination from selected lead
+                );
+              }
+            },
+            backgroundColor: Colors.lightBlue.shade100,
+            child: Icon(Icons.directions),
+          ),
+          // SizedBox(
+          //   height: 20,
+          // ),
+          // FloatingActionButton(
+          //   onPressed: () {},
+          //   backgroundColor: Colors.lightBlue.shade100,
+          //   child: Icon(Icons.gps_fixed_outlined),
+          // ),
+          SizedBox(
+            height: 100,
+          ),
+        ],
+      ),
     );
   }
 }

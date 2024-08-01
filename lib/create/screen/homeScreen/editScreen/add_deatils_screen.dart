@@ -16,6 +16,7 @@ import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart
 import 'package:lead_application/model/leadModel.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:lead_application/services/database_services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animated_button/flutter_animated_button.dart';
@@ -52,15 +53,80 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   final ValueNotifier<bool> _followUpNotifier = ValueNotifier(false);
 
+  final DatabaseService _databaseService = DatabaseService.instance;
+  late Future<List<Map<String, dynamic>>> _leads;
+
   @override
   void initState() {
     super.initState();
+    _fetchLeads();
 
     _fetchStates();
     if (widget.lead != null) {
       _initializeLeadData(widget.lead!);
     }
   }
+
+  void _fetchLeads() {
+    setState(() {
+      _leads = _databaseService.getAllLeads();
+    });
+  }
+
+  void _addLead(Map<String, dynamic> lead) async {
+    await _databaseService.insertLead(lead);
+    _fetchLeads(); // Ensure the leads are fetched again to refresh the UI
+  }
+
+  // Future<void> _addLead() async {
+  //   if (_formKey.currentState?.saveAndValidate() ?? false) {
+  //     final formData = _formKey.currentState?.value;
+
+  //     // Debugging: Print the form data
+  //     log("Form Data: $formData");
+
+  //     if (formData != null) {
+  //       // Create Lead object with null-aware operators and default values
+  //       Lead dataModel = Lead(
+  //         name: formData['name'] ?? '',
+  //         contactNumber: formData['contact_number'] ?? '',
+  //         email: formData['email'] ?? '',
+  //         whatsapp: formData['whatsapp'] ? '1' : '0',
+  //         address: formData['address'] ?? '',
+  //         state_name: formData['state'] ?? '',
+  //         district_name: formData['district'] ?? '',
+  //         city_name: formData['city'] ?? '',
+  //         locationCoordinates: formData['location'] ?? '',
+  //         followUp: formData['follow_up'] == true ? 'true' : 'false',
+  //         follow_up_date:
+  //             (formData['follow_up_date'] as DateTime?)?.toIso8601String() ??
+  //                 '',
+  //         leadPriority: formData['priority'] ?? '',
+  //         // image_Path: formData['image_path'] ?? '',
+  //       );
+
+  //       try {
+  //         await DatabaseService.instance.insertLead(dataModel.toJson());
+  //         var leadData = await DatabaseService.instance.getAllLeads();
+  //         log("Lead Data: $leadData");
+
+  //         // Show success message
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Data successfully inserted')),
+  //         );
+  //       } catch (e) {
+  //         // Handle potential errors during insert or fetch operations
+  //         log("Error: $e");
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Failed to insert data')),
+  //         );
+  //       }
+  //     } else {
+  //       log("Form data is null");
+  //     }
+  //   }
+  //   _fetchLeads(); // Ensure the leads are fetched again to refresh the UI
+  // }
 
   void _initializeLeadData(Lead lead) {
     setState(() {
@@ -585,7 +651,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 ),
                 const SizedBox(height: 15),
                 FormBuilderTextField(
-                  readOnly: true,
+                  // readOnly: true,
                   name: 'location_coordinates',
                   //  initialValue: widget.lead?.locationCoordinates,
                   initialValue: widget.lead?.locationCoordinates,
@@ -622,7 +688,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 60),
-                  child: Text(_location),
+                  child: Text(_location.toString()),
                 ),
                 const SizedBox(height: 15),
                 FormBuilderDropdown<String>(
@@ -722,9 +788,37 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     AnimatedButton(
                       onPress: () {
                         setState(() {
+                          // if (_formKey.currentState?.saveAndValidate() ??
+                          //     false) {
+                          //   var formData = Map<String, dynamic>.from(
+                          //       _formKey.currentState!.value);
+
+                          //   formData['whats_app'] =
+                          //       formData['whats_app'] == true ? '0' : '1';
+                          //   formData['follow_up'] =
+                          //       formData['follow_up'] == true ? 'Yes' : 'No';
+
+                          //   log('Form Data: $formData');
+                          //   _addLead(formData);
+                          //   // Navigator.pop(context);
+                          // }
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
                             final formKey = _formKey.currentState!.value;
+
+                            var formData = Map<String, dynamic>.from(
+                                _formKey.currentState!.value);
+                            (formData['follow_up_date'] as DateTime?)
+                                    ?.toIso8601String() ??
+                                '';
+
+                            formData['whats_app'] =
+                                formData['whats_app'] == true ? '0' : '1';
+                            formData['follow_up'] =
+                                formData['follow_up'] == true ? 'Yes' : 'No';
+
+                            log('Form Data: $formData');
+                            _addLead(formData);
 
                             if (widget.lead != null) {
                               _updateForm(formKey);
@@ -942,8 +1036,10 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     Position position = await Geolocator.getCurrentPosition();
     setState(() {
       _location = 'Lat: ${position.latitude}, Long: ${position.longitude}';
+
       _lat = position.latitude.toString();
       _log = position.longitude.toString();
     });
+    _formKey.currentState?.fields['location_coordinates'];
   }
 }

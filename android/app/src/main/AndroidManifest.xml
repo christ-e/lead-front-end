@@ -51,6 +51,8 @@
             <meta-data
               android:name="com.mapmyindia.sdk.apikey"
               android:value="092687bde0df9929d798b1e1ceafc46d" />
+          
+
 
               
             <intent-filter>
@@ -66,6 +68,9 @@
         <meta-data
             android:name="com.mapmyindia.sdk.apikey"
             android:value="092687bde0df9929d798b1e1ceafc46d" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAiJiOJZivORC1G7EBzmui4xZWEiyoea6A"/>
 
 
     </application>

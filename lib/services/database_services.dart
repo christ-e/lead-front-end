@@ -1,0 +1,109 @@
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+
+class DatabaseService {
+  static final DatabaseService instance = DatabaseService._constructor();
+  static Database? _database;
+
+  final String _tableName = "leads";
+
+  DatabaseService._constructor();
+
+  Future<Database> getDatabase() async {
+    if (_database != null) return _database!;
+    final databaseDirPath = await getDatabasesPath();
+    final databasePath = join(databaseDirPath, "lead_db.db");
+
+    _database = await openDatabase(
+      databasePath,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE $_tableName (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            contact_number TEXT,
+            whats_app TEXT,
+            email TEXT,
+            address TEXT,
+            state TEXT,
+            district TEXT,
+            city TEXT,
+            location_coordinates TEXT,
+            location_lat TEXT,
+            location_log TEXT,
+            follow_up TEXT,
+            follow_up_date TEXT,  
+            lead_priority TEXT,
+            image_path TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        ''');
+      },
+    );
+    return _database!;
+  }
+
+  Future<int> insertLead(Map<String, dynamic> lead) async {
+    final db = await getDatabase();
+
+    lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
+    lead['follow_up'] = lead['follow_up'] == true ? 'true' : 'false';
+
+    return await db.insert(_tableName, lead);
+  }
+
+  Future<int> updateLead(Map<String, dynamic> lead) async {
+    final db = await getDatabase();
+    int id = lead['id'];
+
+    // Convert boolean values to strings
+    lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
+    lead['follow_up'] = lead['follow_up'] == true ? 'true' : 'false';
+
+    return await db.update(
+      _tableName,
+      lead,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteLead(int id) async {
+    final db = await getDatabase();
+    return await db.delete(
+      _tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllLeads() async {
+    final db = await getDatabase();
+    List<Map<String, dynamic>> leads = await db.query(_tableName);
+    print('Fetched Leads: $leads');
+    return leads;
+  }
+
+  Future<Map<String, dynamic>?> getLeadById(int id) async {
+    final db = await getDatabase();
+    List<Map<String, dynamic>> results = await db.query(
+      _tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (results.isNotEmpty) {
+      var lead = results.first;
+
+      // Convert strings back to boolean
+      lead['whats_app'] = lead['whats_app'] == 'true';
+      lead['follow_up'] = lead['follow_up'] == 'true';
+
+      return lead;
+    } else {
+      return null;
+    }
+  }
+}
