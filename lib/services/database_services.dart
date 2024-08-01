@@ -48,7 +48,15 @@ class DatabaseService {
   Future<int> insertLead(Map<String, dynamic> lead) async {
     final db = await getDatabase();
 
-    lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
+    // Convert DateTime to String
+    if (lead.containsKey('follow_up_date') &&
+        lead['follow_up_date'] is DateTime) {
+      lead['follow_up_date'] =
+          (lead['follow_up_date'] as DateTime).toIso8601String();
+    }
+
+    // Convert boolean values to strings
+    // lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
     lead['follow_up'] = lead['follow_up'] == true ? 'true' : 'false';
 
     return await db.insert(_tableName, lead);
@@ -57,6 +65,13 @@ class DatabaseService {
   Future<int> updateLead(Map<String, dynamic> lead) async {
     final db = await getDatabase();
     int id = lead['id'];
+
+    // Convert DateTime to String
+    if (lead.containsKey('follow_up_date') &&
+        lead['follow_up_date'] is DateTime) {
+      lead['follow_up_date'] =
+          (lead['follow_up_date'] as DateTime).toIso8601String();
+    }
 
     // Convert boolean values to strings
     lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
@@ -98,8 +113,14 @@ class DatabaseService {
       var lead = results.first;
 
       // Convert strings back to boolean
-      lead['whats_app'] = lead['whats_app'] == 'true';
+      lead['whats_app'] = lead['whats_app'] == 0;
       lead['follow_up'] = lead['follow_up'] == 'true';
+
+      // Convert String to DateTime
+      if (lead.containsKey('follow_up_date') &&
+          lead['follow_up_date'] != null) {
+        lead['follow_up_date'] = DateTime.parse(lead['follow_up_date']);
+      }
 
       return lead;
     } else {

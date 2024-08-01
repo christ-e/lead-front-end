@@ -52,8 +52,7 @@ class _MapScreenState extends State<MapScreen> {
 
       for (var lead in leads) {
         if (lead.location_lat != null && lead.location_log != null) {
-          _addMarker(double.parse(lead.location_lat!),
-              double.parse(lead.location_log!), lead);
+          _addMarker(lead.location_lat!, lead.location_log!, lead);
         }
       }
     } else {

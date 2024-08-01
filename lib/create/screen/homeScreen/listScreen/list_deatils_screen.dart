@@ -65,7 +65,7 @@ class ListScreen extends ConsumerWidget {
         ),
       );
     }
-    final String emailAddress = '';
+    // final String emailAddress = '';
 
     void _copyToClipboard(String? text) {
       if (text != null) {
@@ -338,7 +338,7 @@ class ListScreen extends ConsumerWidget {
                                       height: 10,
                                     ),
                                     lead.follow_up_date != null &&
-                                            lead.follow_up_date!.isNotEmpty
+                                            lead.follow_up_date!.isEmpty
                                         ? Row(
                                             children: [
                                               Text(

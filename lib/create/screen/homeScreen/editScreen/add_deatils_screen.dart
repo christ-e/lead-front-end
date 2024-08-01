@@ -33,6 +33,7 @@ class AddDetailsScreen extends StatefulWidget {
 
 class _AddDetailsScreenState extends State<AddDetailsScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+  bool useApi = true; // Set this flag based on your condition
   String _location = '';
   String _lat = '';
   String _log = '';
@@ -74,59 +75,25 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   }
 
   void _addLead(Map<String, dynamic> lead) async {
+    (lead['follow_up_date'] as DateTime?)?.toIso8601String() ?? '';
+
+    lead['name'] = lead['name'] ?? "";
+    lead['contact_number'] = lead['contact_number'] ?? "";
+    lead['email'] = lead['email'] ?? "";
+    lead['address'] = lead['address'] ?? "";
+    lead['state'] = lead['state'];
+    lead['district'] = lead['district'];
+    lead['city'] = lead['city'];
+    lead['location_coordinates'] = lead['location_coordinates'] ?? "";
+    lead['location_lat'] = _lat;
+    lead['location_log'] = _log;
+    lead['follow_up'] = lead['follow_up'];
+    lead['lead_priority'] = lead['lead_priority'] ?? "";
+    lead['whats_app'] = lead['whats_app'] == true ? '0' : '1';
+    lead['follow_up'] = lead['follow_up'] == true ? 'Yes' : 'No';
     await _databaseService.insertLead(lead);
     _fetchLeads(); // Ensure the leads are fetched again to refresh the UI
   }
-
-  // Future<void> _addLead() async {
-  //   if (_formKey.currentState?.saveAndValidate() ?? false) {
-  //     final formData = _formKey.currentState?.value;
-
-  //     // Debugging: Print the form data
-  //     log("Form Data: $formData");
-
-  //     if (formData != null) {
-  //       // Create Lead object with null-aware operators and default values
-  //       Lead dataModel = Lead(
-  //         name: formData['name'] ?? '',
-  //         contactNumber: formData['contact_number'] ?? '',
-  //         email: formData['email'] ?? '',
-  //         whatsapp: formData['whatsapp'] ? '1' : '0',
-  //         address: formData['address'] ?? '',
-  //         state_name: formData['state'] ?? '',
-  //         district_name: formData['district'] ?? '',
-  //         city_name: formData['city'] ?? '',
-  //         locationCoordinates: formData['location'] ?? '',
-  //         followUp: formData['follow_up'] == true ? 'true' : 'false',
-  //         follow_up_date:
-  //             (formData['follow_up_date'] as DateTime?)?.toIso8601String() ??
-  //                 '',
-  //         leadPriority: formData['priority'] ?? '',
-  //         // image_Path: formData['image_path'] ?? '',
-  //       );
-
-  //       try {
-  //         await DatabaseService.instance.insertLead(dataModel.toJson());
-  //         var leadData = await DatabaseService.instance.getAllLeads();
-  //         log("Lead Data: $leadData");
-
-  //         // Show success message
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(content: Text('Data successfully inserted')),
-  //         );
-  //       } catch (e) {
-  //         // Handle potential errors during insert or fetch operations
-  //         log("Error: $e");
-  //         ScaffoldMessenger.of(context).showSnackBar(
-  //           SnackBar(content: Text('Failed to insert data')),
-  //         );
-  //       }
-  //     } else {
-  //       log("Form data is null");
-  //     }
-  //   }
-  //   _fetchLeads(); // Ensure the leads are fetched again to refresh the UI
-  // }
 
   void _initializeLeadData(Lead lead) {
     setState(() {
@@ -788,38 +755,14 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     AnimatedButton(
                       onPress: () {
                         setState(() {
-                          // if (_formKey.currentState?.saveAndValidate() ??
-                          //     false) {
-                          //   var formData = Map<String, dynamic>.from(
-                          //       _formKey.currentState!.value);
-
-                          //   formData['whats_app'] =
-                          //       formData['whats_app'] == true ? '0' : '1';
-                          //   formData['follow_up'] =
-                          //       formData['follow_up'] == true ? 'Yes' : 'No';
-
-                          //   log('Form Data: $formData');
-                          //   _addLead(formData);
-                          //   // Navigator.pop(context);
-                          // }
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
                             final formKey = _formKey.currentState!.value;
-
                             var formData = Map<String, dynamic>.from(
                                 _formKey.currentState!.value);
-                            (formData['follow_up_date'] as DateTime?)
-                                    ?.toIso8601String() ??
-                                '';
-
-                            formData['whats_app'] =
-                                formData['whats_app'] == true ? '0' : '1';
-                            formData['follow_up'] =
-                                formData['follow_up'] == true ? 'Yes' : 'No';
 
                             log('Form Data: $formData');
                             _addLead(formData);
-
                             if (widget.lead != null) {
                               _updateForm(formKey);
                             } else {

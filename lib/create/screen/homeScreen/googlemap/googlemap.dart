@@ -18,10 +18,9 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   List<Lead> leads = [];
   late Marker _currentLocationMarker;
   late LatLng _currentLatLng;
-  Lead? _selectedLead; // To store the currently selected lead
+  Lead? _selectedLead;
 
-  Map<MarkerId, Lead> _markerLeadMap =
-      {}; // Map to associate markers with leads
+  Map<MarkerId, Lead> _markerLeadMap = {};
   Set<Marker> _markers = {};
   Set<Polyline> _polylines = {};
 
@@ -49,8 +48,8 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
       for (var lead in leads) {
         if (lead.location_lat != null && lead.location_log != null) {
           _addMarker(
-            double.parse(lead.location_lat!),
-            double.parse(lead.location_log!),
+            lead.location_lat!,
+            lead.location_log!,
             lead,
           );
         }
@@ -63,9 +62,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   Future<void> _checkLocationPermission() async {
     if (await Permission.location.request().isGranted) {
       _getCurrentLocation();
-    } else {
-      // Handle permission denial here if necessary
-    }
+    } else {}
   }
 
   Future<void> _getCurrentLocation() async {
@@ -317,10 +314,8 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
               if (_selectedLead != null) {
                 _fetchRoute(
                   _currentLatLng, // Current location
-                  LatLng(10.0109851, 76.3132312
-                      // double.parse(_selectedLead!.location_lat ?? '0'),
-                      // double.parse(_selectedLead!.location_log ?? '0'),
-                      ), // Destination from selected lead
+                  LatLng(
+                      10.0109851, 76.3132312), // Destination from selected lead
                 );
               }
             },
