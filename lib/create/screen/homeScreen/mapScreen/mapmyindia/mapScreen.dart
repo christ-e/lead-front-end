@@ -146,14 +146,15 @@ class _MapScreenState extends State<MapScreen> {
             ),
             FloatingActionButton(
               onPressed: () {
-                // _fetchRoute(
-                //   LatLng(_currentLocationMarker.options.geometry!.latitude,
-                //       _currentLocationMarker.options.geometry!.longitude),
-                //   // LatLng(double.parse(lead.location_lat!),
-                //   //     double.parse(lead.location_log!)),
-                //   LatLng(10.0109851,
-                //       76.3132312), // Replace with the destination coordinates
-                // );
+                _fetchRoute(
+                  LatLng(10.0101232, 76.3132234),
+                  // LatLng(_currentLocationMarker.options.geometry!.latitude,
+                  //     _currentLocationMarker.options.geometry!.longitude),
+                  // LatLng(double.parse(lead.location_lat!),
+                  //     double.parse(lead.location_log!)),
+                  LatLng(10.01021333,
+                      76.3134345), // Replace with the destination coordinates
+                );
                 // _fetchRoute(
                 //   _currentLatLng,
                 //   LatLng(

@@ -6,7 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animated_button/flutter_animated_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:hive/hive.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
+import 'package:lead_application/controller/loginControler.dart';
+import 'package:lead_application/create/login_Screen/credentils/login_screen.dart';
+import 'package:lead_application/create/login_Screen/ui/login.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/widget/detais_list.dart';
 import 'package:lead_application/model/follow_upDateModel.dart';
@@ -83,6 +89,8 @@ class ListScreen extends ConsumerWidget {
 
   Widget build(BuildContext context, WidgetRef ref) {
     List<FollowUp> followUpDate = [];
+    // final Box _boxLogin = Hive.box("login");
+    LoginController loginController = Get.put(LoginController());
     var submitTextStyle = TextStyle(
         fontSize: 18,
         letterSpacing: 2,
@@ -109,7 +117,9 @@ class ListScreen extends ConsumerWidget {
     final leadsAsyncValue = ref.watch(leadsProvider);
 
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 233, 251, 255),
+      backgroundColor: Theme.of(context).colorScheme.primary,
+
+      // backgroundColor: Color.fromARGB(255, 233, 251, 255),
       appBar: AppBar(
         backgroundColor: Color.fromARGB(255, 233, 251, 255),
         title: const Text(
@@ -118,7 +128,13 @@ class ListScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-              onPressed: () {},
+              //logout
+              onPressed: () {
+                loginController.logout(context);
+                loginController.emailController.clear();
+                loginController.passwordController.clear();
+                loginController.isLoading.value = false;
+              },
               iconSize: 35,
               icon: const Row(
                 children: [

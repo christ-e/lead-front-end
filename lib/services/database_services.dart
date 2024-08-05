@@ -21,6 +21,7 @@ class DatabaseService {
         await db.execute('''
           CREATE TABLE $_tableName (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT,
             name TEXT,
             contact_number TEXT,
             whats_app TEXT,
@@ -56,7 +57,7 @@ class DatabaseService {
     }
 
     // Convert boolean values to strings
-    // lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
+    lead['whats_app'] = lead['whats_app'] == true ? 'true' : 'false';
     lead['follow_up'] = lead['follow_up'] == true ? 'true' : 'false';
 
     return await db.insert(_tableName, lead);

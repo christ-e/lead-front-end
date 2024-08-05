@@ -6,7 +6,10 @@ class ApiEndPoints {
 }
 
 class _AuthEndPoints {
-  final String login = '';
+  final String register = 'register';
+  final String login = 'login';
+  final String logout = 'logout';
+  final String users = 'get_users';
   final String fetchState = 'states';
   final String fetchDistrict = 'districts/';
   final String fetchcity = 'cities/';

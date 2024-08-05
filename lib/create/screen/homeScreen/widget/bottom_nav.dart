@@ -1,8 +1,8 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
-import 'package:lead_application/create/screen/homeScreen/googlemap/googlemap.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/list_deatils_screen.dart';
+import 'package:lead_application/create/screen/homeScreen/mapScreen/googlemap/googlemap.dart';
 import 'package:lead_application/create/screen/homeScreen/oflineScreen/offlineScreen.dart';
 
 class BottomNav extends StatefulWidget {
@@ -42,6 +42,10 @@ class _BottomNavState extends State<BottomNav> {
             image: AssetImage("assets/images/map_icon.png"),
             height: 35,
           ),
+          // Image(
+          //   image: AssetImage("assets/images/map_icon.png"),
+          //   height: 35,
+          // ),
         ],
         color: Colors.white,
         buttonBackgroundColor: Colors.white,

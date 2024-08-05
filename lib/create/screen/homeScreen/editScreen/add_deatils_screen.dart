@@ -16,6 +16,7 @@ import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart
 import 'package:lead_application/model/leadModel.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:lead_application/model/user_model.dart';
 import 'package:lead_application/services/database_services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
@@ -51,6 +52,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   Position? currentPosition;
 
   final List<String> _priorities = ['Hot', 'Warm', 'Cold'];
+  late Usermodels users;
 
   final ValueNotifier<bool> _followUpNotifier = ValueNotifier(false);
 
@@ -60,6 +62,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    fetchUsers();
     _fetchLeads();
 
     _fetchStates();
@@ -77,6 +80,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   void _addLead(Map<String, dynamic> lead) async {
     (lead['follow_up_date'] as DateTime?)?.toIso8601String() ?? '';
 
+    lead['user_id'] = lead['user_id'] ?? "";
     lead['name'] = lead['name'] ?? "";
     lead['contact_number'] = lead['contact_number'] ?? "";
     lead['email'] = lead['email'] ?? "";
@@ -87,12 +91,13 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     lead['location_coordinates'] = lead['location_coordinates'] ?? "";
     lead['location_lat'] = _lat;
     lead['location_log'] = _log;
+    lead['image_path'] = _image?.path;
     lead['follow_up'] = lead['follow_up'];
     lead['lead_priority'] = lead['lead_priority'] ?? "";
     lead['whats_app'] = lead['whats_app'] == true ? '0' : '1';
     lead['follow_up'] = lead['follow_up'] == true ? 'Yes' : 'No';
     await _databaseService.insertLead(lead);
-    _fetchLeads(); // Ensure the leads are fetched again to refresh the UI
+    _fetchLeads();
   }
 
   void _initializeLeadData(Lead lead) {
@@ -170,26 +175,38 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     }
   }
 
-  Future<void> _submitForm(formKey, _location) async {
+  Future<List<Usermodels>> fetchUsers() async {
+    final response =
+        await http.get(Uri.parse('http://127.0.0.1:8000/api/get_users'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> usersJson = json.decode(response.body);
+      return usersJson.map((json) => Usermodels.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load users');
+    }
+  }
+
+  Future<void> _submitForm(
+      Map<String, dynamic> formKey, String? location, String userId) async {
     var request = http.MultipartRequest(
         'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
-
     request.fields['name'] = formKey['name'] ?? "";
+    request.fields['user_id'] = userId;
     request.fields['contact_number'] = formKey['contact_number'] ?? "";
     request.fields['whats_app'] = formKey['whats_app'] ? '1' : '0';
-
     request.fields['email'] = formKey['email'] ?? "";
     request.fields['address'] = formKey['address'] ?? "";
-    request.fields['state'] = formKey['state'];
-    request.fields['district'] = formKey['district'];
-    request.fields['city'] = formKey['city'];
+    request.fields['state'] = formKey['state'] ?? "";
+    request.fields['district'] = formKey['district'] ?? "";
+    request.fields['city'] = formKey['city'] ?? "";
     request.fields['location_coordinates'] =
         formKey['location_coordinates'] ?? "";
     request.fields['location_lat'] = _lat;
     request.fields['location_log'] = _log;
-    request.fields['follow_up'] = formKey['follow_up'];
+    request.fields['follow_up'] = formKey['follow_up'] ?? "";
     request.fields['follow_up_date'] =
-        (formKey['follow_up_date'] as DateTime?)?.toIso8601String() ?? '';
+        (formKey['follow_up_date'] as DateTime?)?.toIso8601String() ?? "";
     request.fields['lead_priority'] = formKey['lead_priority'] ?? "";
 
     if (_image != null) {
@@ -754,31 +771,34 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     ),
                     AnimatedButton(
                       onPress: () {
-                        setState(() {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            final formKey = _formKey.currentState!.value;
-                            var formData = Map<String, dynamic>.from(
-                                _formKey.currentState!.value);
+                        // setState(() async {
+                        //   if (_formKey.currentState!.validate()) {
+                        //     _formKey.currentState!.save();
+                        //     final formKey = _formKey.currentState!.value;
+                        //     var formData = Map<String, dynamic>.from(
+                        //         _formKey.currentState!.value);
 
-                            log('Form Data: $formData');
-                            _addLead(formData);
-                            if (widget.lead != null) {
-                              _updateForm(formKey);
-                            } else {
-                              log(formKey.toString());
-                              _submitForm(formKey, _location);
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Failed to submit form'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            print("Failed");
-                          }
-                        });
+                        //     log('Form Data: $formData');
+                        //     //_addLead(formData);
+                        //     if (widget.lead != null) {
+                        //       _updateForm(formKey);
+                        //     } else {
+                        //       List<Usermodels> users = await fetchUsers();
+                        //       log(formKey.toString());
+                        //       _submitForm(formKey, _location, users[0].id!);
+                        //       // _submitForm(formKey, _location,);
+                        //     }
+                        //   } else {
+                        //     ScaffoldMessenger.of(context).showSnackBar(
+                        //       SnackBar(
+                        //         content: Text('Failed to submit form'),
+                        //         backgroundColor: Colors.red,
+                        //       ),
+                        //     );
+                        //     print("Failed");
+                        //   }
+                        // });
+                        _handleSubmit();
                       },
                       width: 120, // Adjusted width
                       height: 50,
@@ -802,6 +822,43 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       ),
     );
   }
+
+  void _submitFormWrapper() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final formKey = _formKey.currentState!.value;
+      var formData = Map<String, dynamic>.from(_formKey.currentState!.value);
+
+      log('Form Data: $formData');
+
+      if (widget.lead != null) {
+        _updateForm(formKey);
+      } else {
+        List<Usermodels> users = await fetchUsers();
+        log(formKey.toString());
+        _submitForm(formKey, _location, users[0].id.toString());
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit form'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      print("Failed");
+    }
+  }
+
+  void _handleSubmit() {
+    setState(() {
+      // Any state changes that need to be synchronous can go here.
+    });
+
+    // Call the async function outside setState.
+    _submitFormWrapper();
+  }
+
+// Usage in your widget:
 
   Future<void> pickContact() async {
     PermissionStatus permissionStatus = await Permission.contacts.request();
