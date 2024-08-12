@@ -4,7 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:lead_application/model/leadModel.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:lead_application/controller/loginControler.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -18,9 +23,9 @@ class _MapScreenState extends State<MapScreen> {
   List<Lead> leads = [];
   late Symbol _currentLocationMarker;
   late LatLng _currentLatLng;
-  Lead lead = Lead();
   Map<Symbol, Lead> _markerLeadMap = {}; // Map to associate markers with leads
   Lead? _selectedLead; // To store the currently selected lead
+  LoginController loginController = Get.put(LoginController());
 
   @override
   void initState() {
@@ -41,8 +46,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _fetchLeads() async {
-    final response =
-        await http.get(Uri.parse('http://127.0.0.1:8000/api/lead'));
+    final response = await http.get(
+      Uri.parse('http://127.0.0.1:8000/api/lead'),
+      headers: {
+        'Authorization': 'Bearer ${loginController.logtoken}',
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> leadJson = json.decode(response.body);
@@ -52,7 +61,27 @@ class _MapScreenState extends State<MapScreen> {
 
       for (var lead in leads) {
         if (lead.location_lat != null && lead.location_log != null) {
-          _addMarker(lead.location_lat!, lead.location_log!, lead);
+          _addMarker(
+            lead.location_lat!,
+            lead.location_log!,
+            lead,
+          );
+        }
+      }
+
+      // Optionally, fetch routes between all leads
+      if (leads.length > 1) {
+        for (int i = 0; i < leads.length - 1; i++) {
+          _fetchRoute(
+            LatLng(
+              double.parse(leads[i].location_lat! as String),
+              double.parse(leads[i].location_log! as String),
+            ),
+            LatLng(
+              double.parse(leads[i + 1].location_lat! as String),
+              double.parse(leads[i + 1].location_log! as String),
+            ),
+          );
         }
       }
     } else {
@@ -83,7 +112,7 @@ class _MapScreenState extends State<MapScreen> {
 
     _currentLocationMarker = await _mapController.addSymbol(SymbolOptions(
       geometry: _currentLatLng,
-      // iconImage: 'assets/images/location_pin_icon.png',
+      iconImage: 'assets/images/current_location.png',
       iconSize: 0.3,
     ));
 
@@ -128,6 +157,9 @@ class _MapScreenState extends State<MapScreen> {
         onMapCreated: (mapController) {
           _mapController = mapController;
         },
+        onStyleLoadedCallback: () async {
+          await _fetchLeads();
+        },
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(top: 100),
@@ -136,7 +168,7 @@ class _MapScreenState extends State<MapScreen> {
           children: [
             FloatingActionButton(
               onPressed: () {
-                _showOptions();
+                _showOptions(context);
               },
               backgroundColor: Colors.white,
               child: Icon(Icons.more_vert),
@@ -145,23 +177,19 @@ class _MapScreenState extends State<MapScreen> {
               height: 20,
             ),
             FloatingActionButton(
-              onPressed: () {
-                _fetchRoute(
-                  LatLng(10.0101232, 76.3132234),
-                  // LatLng(_currentLocationMarker.options.geometry!.latitude,
-                  //     _currentLocationMarker.options.geometry!.longitude),
-                  // LatLng(double.parse(lead.location_lat!),
-                  //     double.parse(lead.location_log!)),
-                  LatLng(10.01021333,
-                      76.3134345), // Replace with the destination coordinates
-                );
-                // _fetchRoute(
-                //   _currentLatLng,
-                //   LatLng(
-                //     double.parse(_selectedLead!.location_lat ?? '0'),
-                //     double.parse(_selectedLead!.location_log ?? '0'),
-                //   ),
-                // );
+              onPressed: () async {
+                final lastCoordinate = await _fetchLastCoordinate();
+                if (lastCoordinate != null) {
+                  _fetchRoute(
+                    LatLng(10.178890, 76.330380),
+                    LatLng(
+                      (lastCoordinate['latitude']),
+                      (lastCoordinate['longitude']),
+                    ),
+                  );
+                } else {
+                  print('No coordinates found in the database');
+                }
               },
               backgroundColor: Colors.white,
               child: Icon(Icons.directions),
@@ -170,9 +198,12 @@ class _MapScreenState extends State<MapScreen> {
               height: 20,
             ),
             FloatingActionButton(
-                onPressed: () {},
-                backgroundColor: Colors.lightBlue.shade100,
-                child: Icon(Icons.gps_fixed_outlined)),
+              onPressed: () async {
+                await _getCurrentLocation();
+              },
+              backgroundColor: Colors.lightBlue.shade100,
+              child: Icon(Icons.gps_fixed_outlined),
+            ),
           ],
         ),
       ),
@@ -181,7 +212,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _fetchRoute(LatLng start, LatLng end) async {
     final response = await http.get(Uri.parse(
-      'https://apis.mapmyindia.com/advancedmaps/v1/092687bde0df9929d798b1e1ceafc46d/route_adv/driving/${76.31767},${10.01091212};${76.31632365},${10.01011112}?geometries=polyline&overview=full',
+      'https://apis.mapmyindia.com/advancedmaps/v1/092687bde0df9929d798b1e1ceafc46d/route_adv/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=polyline&overview=full',
     ));
 
     if (response.statusCode == 200) {
@@ -234,22 +265,31 @@ class _MapScreenState extends State<MapScreen> {
     ));
   }
 
+  Future<Map<String, dynamic>?> _fetchLastCoordinate() async {
+    final databasePath = await getDatabasesPath();
+    final path = join(databasePath,
+        'coordinates.db'); // Replace with your actual database name
+    final Database db = await openDatabase(path);
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+        'SELECT latitude, longitude FROM coordinates ORDER BY id DESC LIMIT 1');
+    return result.isNotEmpty ? result.first : null;
+  }
+
   void _addMarker(double lat, double lon, Lead lead) async {
-    Symbol symbol = await _mapController.addSymbol(
-        SymbolOptions(
-            geometry: LatLng(lat, lon),
-            iconImage: 'assets/images/red_location.png',
-            iconSize: 0.6,
-            textField: lead.name,
-            textSize: 20,
-            textAnchor: "right"),
-        _markerLeadMap);
-    _showDetails(lead);
+    Symbol symbol = await _mapController.addSymbol(SymbolOptions(
+      geometry: LatLng(lat, lon),
+      iconImage: 'assets/images/red_location.png',
+      iconSize: 0.6,
+      textField: lead.name,
+      textSize: 20,
+      textAnchor: "right",
+    ));
+
     // Associate the marker with its lead
     _markerLeadMap[symbol] = lead;
   }
 
-  void _showDetails(Lead lead) {
+  void _showDetails(Lead lead, context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -279,7 +319,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _showOptions() {
+  void _showOptions(context) {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {

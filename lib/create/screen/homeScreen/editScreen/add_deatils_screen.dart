@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, deprecated_member_use, avoid_print, use_build_context_synchronously
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, deprecated_member_use, avoid_print, use_build_context_synchronously, unused_element
 
 import 'dart:developer';
 import 'dart:io';
@@ -8,10 +8,13 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
+import 'package:lead_application/controller/loginControler.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
 import 'package:lead_application/model/leadModel.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -22,6 +25,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animated_button/flutter_animated_button.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   final Lead? lead; //add
@@ -59,10 +64,12 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   final DatabaseService _databaseService = DatabaseService.instance;
   late Future<List<Map<String, dynamic>>> _leads;
 
+  LoginController loginController = Get.put(LoginController());
+
   @override
   void initState() {
     super.initState();
-    fetchUsers();
+    // fetchUsers();
     _fetchLeads();
 
     _fetchStates();
@@ -77,10 +84,11 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     });
   }
 
-  void _addLead(Map<String, dynamic> lead) async {
+  void _submitForm_Offline(Map<String, dynamic> lead) async {
+    final userid = await SharedPreferences.getInstance();
     (lead['follow_up_date'] as DateTime?)?.toIso8601String() ?? '';
 
-    lead['user_id'] = lead['user_id'] ?? "";
+    lead['user_id'] = userid.getInt('userId');
     lead['name'] = lead['name'] ?? "";
     lead['contact_number'] = lead['contact_number'] ?? "";
     lead['email'] = lead['email'] ?? "";
@@ -120,9 +128,9 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
             ? DateTime.parse(lead.follow_up_date!)
             : null,
       });
-      _selectedState = lead.state_name;
-      _selectedDistrict = lead.district_name;
-      _selectedCity = lead.city_name;
+      _selectedState = lead.state_id;
+      _selectedDistrict = lead.district_id;
+      _selectedCity = lead.city_id;
 
       if (_selectedState != null) {
         _fetchDistricts(_selectedState!);
@@ -160,9 +168,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     }
 
     Future<void> _pickImageFile() async {
-      // Open file picker
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image, // Restrict to images
+        type: FileType.image,
       );
 
       if (result != null) {
@@ -175,24 +182,24 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     }
   }
 
-  Future<List<Usermodels>> fetchUsers() async {
-    final response =
-        await http.get(Uri.parse('http://127.0.0.1:8000/api/get_users'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> usersJson = json.decode(response.body);
-      return usersJson.map((json) => Usermodels.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load users');
-    }
-  }
-
   Future<void> _submitForm(
-      Map<String, dynamic> formKey, String? location, String userId) async {
+    Map<String, dynamic> formKey,
+    String? location,
+  ) async {
     var request = http.MultipartRequest(
-        'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
+      'POST',
+      Uri.parse('http://127.0.0.1:8000/api/store'),
+    );
+    final userid = await SharedPreferences.getInstance();
+    // await pref.getString('userId');
+
+    ;
+
+    request.headers['Content-Type'] = 'application/json';
+    request.headers['Authorization'] = 'Bearer ${loginController.logtoken}';
+
     request.fields['name'] = formKey['name'] ?? "";
-    request.fields['user_id'] = userId;
+    request.fields['user_id'] = userid.getInt('userId').toString();
     request.fields['contact_number'] = formKey['contact_number'] ?? "";
     request.fields['whats_app'] = formKey['whats_app'] ? '1' : '0';
     request.fields['email'] = formKey['email'] ?? "";
@@ -225,7 +232,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       print("Response body: $responseBody");
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Form submission failed')));
-      // _showAlertDialog(context, 'Error', 'Form submission failed');
       _showAlertDialog(context, 'Error', 'Form submission failed');
     }
   }
@@ -273,6 +279,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer ${loginController.logtoken}',
       },
       body: jsonEncode(encodableFormDetails),
     ));
@@ -288,7 +295,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
         textColor: Colors.white,
         fontSize: 16.0,
       );
-      Navigator.pushReplacement(
+      Navigator.pop(
         context,
         MaterialPageRoute(builder: (context) => BottomNav()),
       );
@@ -771,34 +778,31 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     ),
                     AnimatedButton(
                       onPress: () {
-                        // setState(() async {
-                        //   if (_formKey.currentState!.validate()) {
-                        //     _formKey.currentState!.save();
-                        //     final formKey = _formKey.currentState!.value;
-                        //     var formData = Map<String, dynamic>.from(
-                        //         _formKey.currentState!.value);
+                        setState(() async {
+                          if (_formKey.currentState!.validate()) {
+                            _formKey.currentState!.save();
+                            final formKey = _formKey.currentState!.value;
+                            var formData = Map<String, dynamic>.from(
+                                _formKey.currentState!.value);
 
-                        //     log('Form Data: $formData');
-                        //     //_addLead(formData);
-                        //     if (widget.lead != null) {
-                        //       _updateForm(formKey);
-                        //     } else {
-                        //       List<Usermodels> users = await fetchUsers();
-                        //       log(formKey.toString());
-                        //       _submitForm(formKey, _location, users[0].id!);
-                        //       // _submitForm(formKey, _location,);
-                        //     }
-                        //   } else {
-                        //     ScaffoldMessenger.of(context).showSnackBar(
-                        //       SnackBar(
-                        //         content: Text('Failed to submit form'),
-                        //         backgroundColor: Colors.red,
-                        //       ),
-                        //     );
-                        //     print("Failed");
-                        //   }
-                        // });
-                        _handleSubmit();
+                            log('Form Data: $formData');
+                            _submitForm_Offline(formData);
+                            if (widget.lead != null) {
+                              _updateForm(formKey);
+                            } else {
+                              log(formKey.toString());
+                              _submitForm(formKey, _location);
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to submit form'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            print("Failed");
+                          }
+                        });
                       },
                       width: 120, // Adjusted width
                       height: 50,
@@ -822,43 +826,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       ),
     );
   }
-
-  void _submitFormWrapper() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final formKey = _formKey.currentState!.value;
-      var formData = Map<String, dynamic>.from(_formKey.currentState!.value);
-
-      log('Form Data: $formData');
-
-      if (widget.lead != null) {
-        _updateForm(formKey);
-      } else {
-        List<Usermodels> users = await fetchUsers();
-        log(formKey.toString());
-        _submitForm(formKey, _location, users[0].id.toString());
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit form'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      print("Failed");
-    }
-  }
-
-  void _handleSubmit() {
-    setState(() {
-      // Any state changes that need to be synchronous can go here.
-    });
-
-    // Call the async function outside setState.
-    _submitFormWrapper();
-  }
-
-// Usage in your widget:
 
   Future<void> pickContact() async {
     PermissionStatus permissionStatus = await Permission.contacts.request();
@@ -972,7 +939,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   Future<void> _fetchStates() async {
     final response = await http.get(Uri.parse(
-        '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}'));
+      '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}',
+    ));
     if (response.statusCode == 200) {
       setState(() {
         _states = jsonDecode(response.body);

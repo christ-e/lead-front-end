@@ -1,3 +1,4 @@
+import 'package:contacts_service/contacts_service.dart';
 import 'package:email_auth/email_auth.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:lead_application/controller/loginControler.dart';
 import 'package:lead_application/controller/registarionController.dart';
 import 'package:lead_application/create/login_Screen/credentils/widgets/otp_verification.dart';
 import 'package:lead_application/validator/validation.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CreateUser extends StatefulWidget {
   @override
@@ -86,16 +88,27 @@ class _CreateUserState extends State<CreateUser>
         otpLength: 6,
       );
     }
-    // void sendOTP() async {
-    //   EmailAuth emailAuth = EmailAuth(sessionName: "Test Session");
-    //   var res = await emailAuth.sendOtp(
-    //       recipientMail: registrationController.emailController.text);
-    //   if (res) {
-    //     print("Otp Sent");
-    //   } else {
-    //     print("We couldn't send");
-    //   }
-    // }
+
+    Future<void> pickContact() async {
+      PermissionStatus permissionStatus = await Permission.contacts.request();
+
+      if (permissionStatus.isGranted) {
+        Contact? contact = await ContactsService.openDeviceContactPicker();
+        if (contact != null && contact.phones!.isNotEmpty) {
+          setState(() {
+            _formKey.currentState?.fields['phone']
+                ?.didChange(contact.phones!.first.value);
+          });
+        }
+      } else {
+        // Handle permission denied scenario
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Contacts permission is required to pick a contact')),
+        );
+      }
+    }
 
     void verifyOTP() async {
       EmailAuth emailAuth = EmailAuth(sessionName: "Test Session");
@@ -158,19 +171,6 @@ class _CreateUserState extends State<CreateUser>
                           otpService.sendOTP(registrationController
                               .emailController
                               .toString());
-
-                          // if (await EmailOTP.sendOTP(
-                          //     email: registrationController.emailController
-                          //         .toString())) {
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //       const SnackBar(
-                          //           content: Text("OTP has been sent")));
-                          // } else {
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //       const SnackBar(
-                          //           content: Text("OTP failed sent")));
-                          // }
-
                           _OTP = !_OTP;
                           _showOtpSentSnackBar;
                         });
@@ -196,7 +196,6 @@ class _CreateUserState extends State<CreateUser>
                       child: Text("Verify OTP"),
                       onPressed: () {
                         setState(() {
-                          // verifyOTP();
                           EmailOTP.verifyOTP(otp: _otpController.text);
                         });
                       },
@@ -243,15 +242,20 @@ class _CreateUserState extends State<CreateUser>
                   name: 'phone',
                   controller: registrationController.phoneNoController,
                   decoration: InputDecoration(
-                    labelText: 'Phone No',
-                    prefixIcon: const Icon(Icons.contact_phone_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                      labelText: 'Phone No',
+                      prefixIcon: const Icon(Icons.contact_phone_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.contacts_outlined),
+                        onPressed: () {
+                          pickContact();
+                        },
+                      )),
                   validator: (value) => ErrorValidation().createPhoneNo(value),
                 ),
                 const SizedBox(height: 50),

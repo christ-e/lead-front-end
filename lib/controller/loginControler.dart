@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -11,105 +12,93 @@ class LoginController extends GetxController {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  var logtoken = "".obs;
-  var isLoading = false.obs;
+  var logtoken = "";
+  var userid = "";
 
+  var isLoading = false.obs;
   Future<void> loginWithEmail(BuildContext context) async {
     var headers = {'Content-Type': 'application/json'};
-    try {
-      var url =
-          Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.login);
-      print('URL: $url'); // Debug URL
-      Map<String, String> body = {
-        'email': emailController.text.trim(),
-        'password': passwordController.text
-      };
-      print('Request Body: $body'); // Debug Request Body
-      print('Headers: $headers'); // Debug Headers
+    var url =
+        Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.login);
+    Map body = {
+      'email': emailController.text.trim(),
+      'password': passwordController.text
+    };
 
-      http.Response response =
-          await http.post(url, body: jsonEncode(body), headers: headers);
-      print('Response: ${response.body}'); // Debug Response
+    http.Response response =
+        await http.post(url, body: jsonEncode(body), headers: headers);
+    print(response.body);
 
-      if (response.statusCode == 200) {
-        isLoading.value = true;
-        Get.offAll(BottomNav());
+    if (response.statusCode == 200) {
+      isLoading.value = true;
+
+      final data = jsonDecode(response.body);
+      final token = data['token'];
+      print('Decoded data: $data');
+
+      if (token != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+
+        // Accessing the id from the key "0"
+        if (data.containsKey("0") && data["0"].containsKey("id")) {
+          final userId = data["0"]["id"];
+          await prefs.setInt('userId', userId);
+          // userid = userId;
+          log('User ID stored: $userId');
+        } else {
+          print('User ID not found in response data');
+        }
+        logtoken = token;
+        log('Login successful, token stored: $logtoken');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login Success')),
         );
-
-        final json = jsonDecode(response.body);
-
-        if (json['code'] == 0) {
-          var receivedToken = json['data']['Token'];
-          SharedPreferences prefs = await _prefs;
-          await prefs.setString('token', receivedToken);
-
-          logtoken.value =
-              receivedToken; // Save the token in the observable variable
-        } else if (json['code'] == 1) {
-          throw json['message'];
-        }
+        Get.off(BottomNav());
       } else {
-        isLoading.value = false;
-        throw jsonDecode(response.body)["Message"] ?? "LogIn Failed";
+        print('Token not found in response data');
       }
-      isLoading.value = true;
-    } catch (error) {
-      print('Error: $error'); // Debug Error
+    } else {
       isLoading.value = false;
-      Get.back();
-      showDialog(
-          context: Get.context!,
-          builder: (context) {
-            return SimpleDialog(
-              backgroundColor: const Color.fromARGB(255, 255, 170, 164),
-              title: Text('Enter Valid Details'),
-              contentPadding: EdgeInsets.all(20),
-              children: [Text(error.toString())],
-            );
-          });
+      print('Login failed: ${response.body}');
     }
+    isLoading.value = false;
   }
 
   void saveData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('logtoken', logtoken.value);
+    await prefs.setString('logtoken', logtoken);
   }
 
+  //logout
   Future<void> logout(BuildContext context) async {
-    try {
-      var url =
-          Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.logout);
-      var headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${logtoken.value}',
-      };
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      http.Response response = await http.post(url, headers: headers);
-      if (response.statusCode == 200) {
-        SharedPreferences prefs = await _prefs;
-        await prefs.clear();
-        logtoken.value = ""; // Clear the token from the observable variable
-        Get.offAll(LoginScreen());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Logout Successful')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return const LoginScreen();
-            },
-          ),
-        );
-      } else {
-        throw 'Failed to logout';
-      }
-    } catch (error) {
-      print('Logout Error: $error'); // Debug Error
+    final response = await http.post(
+      Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.logout),
+      // Uri.parse('http://127.0.0.1:8000/api/logout'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $logtoken',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      await prefs.clear();
+
+      logtoken = "";
+      emailController.clear();
+      passwordController.clear();
+      isLoading.value = false;
+      Get.offAll(() => LoginScreen());
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logout Failed: $error')),
+        SnackBar(content: Text('Logout Successful')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Logout Failed: ${response.body}')),
       );
     }
   }

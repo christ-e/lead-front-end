@@ -100,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ErrorValidation().loginPassword(value),
                     ),
                     SizedBox(height: 35),
-                    //
                     Column(
                       children: [
                         ElevatedButton(
@@ -140,6 +139,39 @@ class _LoginScreenState extends State<LoginScreen> {
                                 );
                               },
                               child: const Text("Signup"),
+                            ),
+                          ],
+                        ),
+                        // Text("Or"),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                                  borderRadius: BorderRadius.circular(15)),
+                              width: 210,
+                              height: 40,
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    print("Sign In With Google");
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset("assets/images/google.png"),
+                                      Text("Sign In With Google")
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),

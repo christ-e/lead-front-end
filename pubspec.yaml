@@ -67,6 +67,7 @@ dependencies:
   email_auth: ^2.0.0
   mailer: ^6.1.2
   email_otp: ^3.0.2
+  connectivity_plus: ^6.0.4
 
   # location: ^7.0.0
 

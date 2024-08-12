@@ -16,12 +16,14 @@ import 'package:lead_application/create/login_Screen/ui/login.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/widget/detais_list.dart';
 import 'package:lead_application/model/follow_upDateModel.dart';
+import 'package:lead_application/model/leadModel.dart';
 import 'package:lead_application/riverpod/api_functions.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class ListScreen extends ConsumerWidget {
   const ListScreen({super.key});
+
   void _openWhatsApp(String phoneNumber) async {
     final Uri whatsappUri = Uri(
       scheme: 'https',
@@ -46,12 +48,15 @@ class ListScreen extends ConsumerWidget {
   }
 
   Future<void> deleteLead(
-      BuildContext context, int leadId, WidgetRef ref) async {
+      BuildContext context, int leadId, WidgetRef ref, logtoken) async {
     final response = await http.delete(
-      Uri.parse('http://127.0.0.1:8000/api/lead_data/$leadId'),
+      Uri.parse(
+          "${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.deleteData}$leadId"),
+      // Uri.parse('http://127.0.0.1:8000/api/lead_data/$leadId'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': ' Bearer $logtoken'
       },
     );
 
@@ -89,7 +94,7 @@ class ListScreen extends ConsumerWidget {
 
   Widget build(BuildContext context, WidgetRef ref) {
     List<FollowUp> followUpDate = [];
-    // final Box _boxLogin = Hive.box("login");
+
     LoginController loginController = Get.put(LoginController());
     var submitTextStyle = TextStyle(
         fontSize: 18,
@@ -98,8 +103,9 @@ class ListScreen extends ConsumerWidget {
         fontWeight: FontWeight.w400);
     Future<void> getFollowUpDates(int leadId) async {
       try {
-        final response = await http
-            .get(Uri.parse('http://127.0.0.1:8000/api/follow-ups/$leadId'));
+        final response = await http.get(Uri.parse(
+            '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.follow_upData}$leadId'));
+        // .get(Uri.parse('http://127.0.0.1:8000/api/follow-ups/$leadId'));
 
         if (response.statusCode == 200) {
           List jsonResponse =
@@ -117,7 +123,9 @@ class ListScreen extends ConsumerWidget {
     final leadsAsyncValue = ref.watch(leadsProvider);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: leadsAsyncValue.hasValue
+          ? Theme.of(context).colorScheme.onPrimary
+          : Theme.of(context).colorScheme.inverseSurface,
 
       // backgroundColor: Color.fromARGB(255, 233, 251, 255),
       appBar: AppBar(
@@ -131,9 +139,6 @@ class ListScreen extends ConsumerWidget {
               //logout
               onPressed: () {
                 loginController.logout(context);
-                loginController.emailController.clear();
-                loginController.passwordController.clear();
-                loginController.isLoading.value = false;
               },
               iconSize: 35,
               icon: const Row(
@@ -172,7 +177,12 @@ class ListScreen extends ConsumerWidget {
                         style: TextStyle(
                             fontSize: 30, fontWeight: FontWeight.bold),
                       )),
-                      Image.asset("assets/images/empty_folder_icon.png")
+                      Image.asset("assets/images/empty_folder_icon.png"),
+                      ElevatedButton(
+                          onPressed: () {
+                            ref.refresh(leadsProvider);
+                          },
+                          child: Text("Refresh")),
                     ],
                   ),
                 )
@@ -186,13 +196,11 @@ class ListScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final lead = leads[index];
                     final colors = [
-                      Color.fromARGB(255, 234, 239, 241),
-                      Color.fromARGB(255, 234, 239, 241),
-                      Color.fromARGB(255, 234, 239, 241),
-                      Color.fromARGB(255, 234, 239, 241),
-                      // Color.fromARGB(255, 192, 198, 230),
-                      // Color.fromARGB(255, 255, 205, 210),
-                      // Color.fromARGB(255, 210, 255, 210),
+                      Color.fromARGB(255, 245, 245, 245), // Light Gray
+                      Color.fromARGB(255, 255, 248, 240), // Light Beige
+                      Color.fromARGB(255, 240, 255, 240), // Honeydew
+                      Color.fromARGB(255, 240, 248, 255), // Alice Blue
+                      Color.fromARGB(255, 255, 250, 250), // Snow
                     ];
                     final cardColor = colors[index % colors.length];
                     return Padding(
@@ -223,16 +231,26 @@ class ListScreen extends ConsumerWidget {
                                     SizedBox(
                                       height: 10,
                                     ),
+                                    // Row(
+                                    //   children: [
+                                    //     Text("User id: "),
+                                    //     Text(
+                                    //       lead.user_id ?? '**',
+                                    //       style: TextStyle(
+                                    //           fontSize: 20,
+                                    //           fontWeight: FontWeight.w600),
+                                    //     ),
+                                    //   ],
+                                    // ),
                                     Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           lead.name ?? 'No Name',
                                           style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.w600),
-                                        ),
-                                        SizedBox(
-                                          width: 10,
                                         ),
                                         lead.image_path != null
                                             ? CircleAvatar(
@@ -440,7 +458,8 @@ class ListScreen extends ConsumerWidget {
                                       children: [
                                         IconButton(
                                           onPressed: () {
-                                            deleteLead(context, lead.id!, ref);
+                                            deleteLead(context, lead.id!, ref,
+                                                loginController.logtoken);
                                             ref.refresh(leadsProvider);
                                           },
                                           icon: Image.asset(

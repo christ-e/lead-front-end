@@ -1,9 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
 import 'package:lead_application/services/database_services.dart';
 import 'package:http/http.dart' as http;
+
+import '../../../../controller/loginControler.dart';
 
 class Offlinescreen extends StatefulWidget {
   const Offlinescreen({super.key});
@@ -15,6 +17,8 @@ class Offlinescreen extends StatefulWidget {
 class _OfflinescreenState extends State<Offlinescreen> {
   final DatabaseService _databaseService = DatabaseService.instance;
   late Future<List<Map<String, dynamic>>> _leads;
+  bool isLoading = false;
+  LoginController loginController = Get.put(LoginController());
 
   @override
   void initState() {
@@ -28,30 +32,33 @@ class _OfflinescreenState extends State<Offlinescreen> {
     });
   }
 
-  File? _image;
+  // File? _image;
+
   Future<void> _submitForm(Map<String, dynamic> lead) async {
     var request = http.MultipartRequest(
         'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
 
     // Include any necessary headers here
-    // request.headers['Authorization'] = 'Bearer your_api_token';
+    request.headers['Accept'] = 'application/json';
+    request.headers['Authorization'] = 'Bearer ${loginController.logtoken}';
 
     request.fields['name'] = lead['name'] ?? "";
+    request.fields['user_id '] = lead['user_id'] ?? "";
     request.fields['contact_number'] = lead['contact_number'] ?? "";
-    request.fields['whats_app'] = lead['whats_app'] ?? "";
+    request.fields['whats_app'] = lead['whats_app'] ?? 0;
     request.fields['email'] = lead['email'] ?? "";
     request.fields['address'] = lead['address'] ?? "";
     request.fields['state'] = lead['state'] ?? "";
     request.fields['district'] = lead['district'] ?? "";
     request.fields['city'] = lead['city'] ?? "";
     request.fields['location_coordinates'] = lead['location_coordinates'] ?? "";
-    request.fields['location_lat'] = lead['_lat'] ?? "";
-    request.fields['location_log'] = lead['_log'] ?? "";
+    request.fields['location_lat'] = lead['location_lat'] ?? "";
+    request.fields['location_log'] = lead['location_log'] ?? "";
     request.fields['follow_up'] = lead['follow_up'] ?? "";
     request.fields['follow_up_date'] = lead['follow_up_date'] ?? "";
     request.fields['lead_priority'] = lead['lead_priority'] ?? "";
 
-    if (_image != null && lead['image_path'] != null) {
+    if (lead['image_path'] != null && lead['image_path'] != null) {
       var file =
           await http.MultipartFile.fromPath('image_path', lead['image_path']);
       request.files.add(file);
@@ -78,6 +85,40 @@ class _OfflinescreenState extends State<Offlinescreen> {
     }
   }
 
+  Future<void> _syncAllLeads() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      List<Map<String, dynamic>> leads = await _leads;
+      for (var lead in leads) {
+        await _submitForm(lead);
+      }
+      _showAlertDialog(context, 'Success', 'All leads have been synced.');
+    } catch (e) {
+      print("Sync failed with error: $e");
+      _showAlertDialog(context, 'Error', 'Sync failed due to an error');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _deleteLead(int id) async {
+    try {
+      await _databaseService.deleteLead(id);
+      _fetchLeads(); // Refresh the list
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Lead deleted')));
+    } catch (e) {
+      print("Delete failed with error: $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to delete lead')));
+    }
+  }
+
   void _showAlertDialog(
     BuildContext context,
     String title,
@@ -96,14 +137,15 @@ class _OfflinescreenState extends State<Offlinescreen> {
             TextButton(
               child: Text("OK"),
               onPressed: () {
-                Future.delayed(Duration(seconds: 2), () {
+                Navigator.of(context).pop();
+                if (title == 'Success') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => BottomNav(),
                     ),
                   );
-                });
+                }
               },
             ),
           ],
@@ -136,11 +178,34 @@ class _OfflinescreenState extends State<Offlinescreen> {
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final lead = snapshot.data![index];
-                      return ListTile(
-                        title: Text(lead['name']),
-                        subtitle: Column(
+                      return Container(
+                        padding: EdgeInsets.all(10.0),
+                        margin: EdgeInsets.symmetric(
+                            vertical: 5.0, horizontal: 10.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset:
+                                  Offset(0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(
+                              lead['name'] ?? "No Name",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16.0,
+                              ),
+                            ),
+                            SizedBox(height: 5.0),
                             Text(lead['contact_number'] ?? ""),
                             Text(lead['email'] ?? ""),
                             Text(lead['address'] ?? ""),
@@ -154,13 +219,30 @@ class _OfflinescreenState extends State<Offlinescreen> {
                             Text(lead['state'] ?? ""),
                             Text(lead['city'] ?? ""),
                             Text(lead['district'] ?? ""),
+                            SizedBox(height: 10.0),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _submitForm(lead);
+                                  },
+                                  child: Text("Send"),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    _deleteLead(lead['id']);
+                                  },
+                                  icon: Icon(Icons.delete),
+                                  style: ElevatedButton.styleFrom(
+                                    iconColor: Colors
+                                        .red, // Red color for delete button
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                        trailing: ElevatedButton(
-                            onPressed: () {
-                              _submitForm(lead);
-                            },
-                            child: Text("Send")),
                       );
                     },
                   );
@@ -171,10 +253,8 @@ class _OfflinescreenState extends State<Offlinescreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: () {
-                // Sync action
-              },
-              child: Text('Sync'),
+              onPressed: isLoading ? null : _syncAllLeads,
+              child: isLoading ? CircularProgressIndicator() : Text('Sync'),
             ),
           ),
         ],

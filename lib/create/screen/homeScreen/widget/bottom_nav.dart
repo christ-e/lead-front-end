@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/list_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/mapScreen/googlemap/googlemap.dart';
+import 'package:lead_application/create/screen/homeScreen/mapScreen/mapmyindia/location.dart';
+import 'package:lead_application/create/screen/homeScreen/mapScreen/mapmyindia/mapScreen.dart';
 import 'package:lead_application/create/screen/homeScreen/oflineScreen/offlineScreen.dart';
 
 class BottomNav extends StatefulWidget {
@@ -17,8 +19,10 @@ class _BottomNavState extends State<BottomNav> {
     ListScreen(),
     AddDetailsScreen(),
     Offlinescreen(),
-    // MapScreen(),
-    GoogleMapScreen(),
+
+    MyHomePage(),
+    MapScreen(),
+    // GoogleMapScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -42,10 +46,10 @@ class _BottomNavState extends State<BottomNav> {
             image: AssetImage("assets/images/map_icon.png"),
             height: 35,
           ),
-          // Image(
-          //   image: AssetImage("assets/images/map_icon.png"),
-          //   height: 35,
-          // ),
+          Image(
+            image: AssetImage("assets/images/map_icon.png"),
+            height: 35,
+          ),
         ],
         color: Colors.white,
         buttonBackgroundColor: Colors.white,

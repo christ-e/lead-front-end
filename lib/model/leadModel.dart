@@ -1,6 +1,7 @@
 // ignore_for_file: file_names, non_constant_identifier_names
 class Lead {
   final int? id;
+  final int? user_id;
   final String? name;
   final String? contactNumber;
   final String? address;
@@ -22,6 +23,7 @@ class Lead {
 
   Lead({
     this.id,
+    this.user_id,
     this.name,
     this.contactNumber,
     this.address,
@@ -45,6 +47,7 @@ class Lead {
   factory Lead.fromJson(Map<String, dynamic> json) {
     return Lead(
       id: json['id'],
+      user_id: json['user_id '],
       name: json['name'],
       contactNumber: json['contact_number'],
       address: json['address'],
