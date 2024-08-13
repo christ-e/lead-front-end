@@ -8,16 +8,12 @@ import 'package:flutter_animated_button/flutter_animated_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:hive/hive.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/controller/loginControler.dart';
-import 'package:lead_application/create/login_Screen/credentils/login_screen.dart';
-import 'package:lead_application/create/login_Screen/ui/login.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/widget/detais_list.dart';
 import 'package:lead_application/model/follow_upDateModel.dart';
-import 'package:lead_application/model/leadModel.dart';
-import 'package:lead_application/riverpod/api_functions.dart';
+import 'package:lead_application/db_connection/riverpod/api_functions.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -231,17 +227,6 @@ class ListScreen extends ConsumerWidget {
                                     SizedBox(
                                       height: 10,
                                     ),
-                                    // Row(
-                                    //   children: [
-                                    //     Text("User id: "),
-                                    //     Text(
-                                    //       lead.user_id ?? '**',
-                                    //       style: TextStyle(
-                                    //           fontSize: 20,
-                                    //           fontWeight: FontWeight.w600),
-                                    //     ),
-                                    //   ],
-                                    // ),
                                     Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
@@ -260,7 +245,7 @@ class ListScreen extends ConsumerWidget {
                                                         ? Color.fromARGB(
                                                             255, 234, 239, 241)
                                                         : Color.fromARGB(
-                                                            255, 192, 198, 230),
+                                                            255, 234, 239, 241),
                                                 backgroundImage: NetworkImage(
                                                   "${ApiEndPoints.authEndpoints.leadImage}${lead.image_path}",
                                                 ),
@@ -273,7 +258,7 @@ class ListScreen extends ConsumerWidget {
                                                         ? Color.fromARGB(
                                                             255, 234, 239, 241)
                                                         : Color.fromARGB(
-                                                            255, 192, 198, 230),
+                                                            255, 255, 255, 255),
                                                 child: Icon(
                                                   Icons.person,
                                                   size: 50,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/model/leadModel.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import 'package:geolocator/geolocator.dart';
@@ -23,8 +24,8 @@ class _MapScreenState extends State<MapScreen> {
   List<Lead> leads = [];
   late Symbol _currentLocationMarker;
   late LatLng _currentLatLng;
-  Map<Symbol, Lead> _markerLeadMap = {}; // Map to associate markers with leads
-  Lead? _selectedLead; // To store the currently selected lead
+  Map<Symbol, Lead> _markerLeadMap = {};
+  Lead? _selectedLead;
   LoginController loginController = Get.put(LoginController());
 
   @override
@@ -47,7 +48,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _fetchLeads() async {
     final response = await http.get(
-      Uri.parse('http://127.0.0.1:8000/api/lead'),
+      Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.leadData),
       headers: {
         'Authorization': 'Bearer ${loginController.logtoken}',
       },
@@ -74,12 +75,12 @@ class _MapScreenState extends State<MapScreen> {
         for (int i = 0; i < leads.length - 1; i++) {
           _fetchRoute(
             LatLng(
-              double.parse(leads[i].location_lat! as String),
-              double.parse(leads[i].location_log! as String),
+              (leads[i].location_lat!),
+              (leads[i].location_log!),
             ),
             LatLng(
-              double.parse(leads[i + 1].location_lat! as String),
-              double.parse(leads[i + 1].location_log! as String),
+              (leads[i + 1].location_lat!),
+              (leads[i + 1].location_log!),
             ),
           );
         }

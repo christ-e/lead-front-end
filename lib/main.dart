@@ -4,10 +4,7 @@ import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:lead_application/create/login_Screen/credentils/login_screen.dart';
-import 'package:lead_application/create/screen/loginScreen/login_user.dart';
+import 'package:lead_application/create/screen/credentialsScreen/login_Screen/login_screen.dart';
 
 void main() async {
   // await _initHive();
@@ -27,8 +24,6 @@ class MyApp extends StatelessWidget {
     return ProviderScope(
         child: GetMaterialApp(
       debugShowCheckedModeBanner: false,
-
-      //    home: BottomNav()
       home: LoginScreen(),
     ));
   }

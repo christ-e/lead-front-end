@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:lead_application/constant/api_Endpoints.dart';
-import 'package:lead_application/create/login_Screen/credentils/login_screen.dart';
+import 'package:lead_application/create/screen/credentialsScreen/login_Screen/login_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -76,7 +76,6 @@ class LoginController extends GetxController {
 
     final response = await http.post(
       Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.logout),
-      // Uri.parse('http://127.0.0.1:8000/api/logout'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

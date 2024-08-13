@@ -20,12 +20,11 @@ import 'package:lead_application/model/leadModel.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:lead_application/model/user_model.dart';
-import 'package:lead_application/services/database_services.dart';
+import 'package:lead_application/db_connection/services/database_services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animated_button/flutter_animated_button.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AddDetailsScreen extends StatefulWidget {
@@ -39,7 +38,6 @@ class AddDetailsScreen extends StatefulWidget {
 
 class _AddDetailsScreenState extends State<AddDetailsScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
-  bool useApi = true; // Set this flag based on your condition
   String _location = '';
   String _lat = '';
   String _log = '';

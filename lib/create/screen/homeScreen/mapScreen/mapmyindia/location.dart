@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lead_application/services/location_services.dart';
+import 'package:lead_application/db_connection/services/location_services.dart';
 
 class MyHomePage extends StatefulWidget {
   @override

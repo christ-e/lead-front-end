@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:lead_application/controller/loginControler.dart';
-import 'package:lead_application/create/login_Screen/credentils/createUser.dart';
+import 'package:lead_application/create/screen/credentialsScreen/register_screen/createUser.dart';
 import 'package:lead_application/validator/validation.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';

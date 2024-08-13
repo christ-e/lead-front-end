@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:lead_application/controller/loginControler.dart';
 import 'package:lead_application/controller/registarionController.dart';
-import 'package:lead_application/create/login_Screen/credentils/widgets/otp_verification.dart';
+import 'package:lead_application/create/screen/credentialsScreen/register_screen/widgets/otp_verification.dart';
 import 'package:lead_application/validator/validation.dart';
 import 'package:permission_handler/permission_handler.dart';
 

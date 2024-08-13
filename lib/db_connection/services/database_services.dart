@@ -16,12 +16,11 @@ class DatabaseService {
 
     _database = await openDatabase(
       databasePath,
-      version: 2,
+      version: 1,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_tableName (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
             name TEXT,
             contact_number TEXT,
             whats_app TEXT,
@@ -42,20 +41,8 @@ class DatabaseService {
           );
         ''');
       },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < newVersion) {
-          await db
-              .execute('ALTER TABLE $_tableName ADD COLUMN user_id INTEGER;');
-        }
-      },
     );
     return _database!;
-  }
-
-  Future<void> deleteDatabase(String databasePath) async {
-    final databaseDirPath = await getDatabasesPath();
-    final databasePath = join(databaseDirPath, "lead_db.db");
-    await deleteDatabase(databasePath);
   }
 
   Future<int> insertLead(Map<String, dynamic> lead) async {

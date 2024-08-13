@@ -10,6 +10,8 @@
 analyzer:
   errors:
     deprecated_member_use: ignore
+    unnecessary_import: ignore
+    unnecessary_null_comparison: ignore
     unnecessary_string_interpolations: ignore
     unused_field: ignore
 incl ignoreude: package:flutter_lints/flutter.yaml

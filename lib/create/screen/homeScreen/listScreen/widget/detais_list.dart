@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
-import 'package:lead_application/riverpod/api_functions.dart';
+import 'package:lead_application/db_connection/riverpod/api_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DetailsList extends StatelessWidget {

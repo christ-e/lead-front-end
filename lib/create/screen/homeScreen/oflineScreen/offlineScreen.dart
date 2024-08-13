@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:lead_application/constant/api_Endpoints.dart';
+import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
-import 'package:lead_application/services/database_services.dart';
+import 'package:lead_application/db_connection/services/database_services.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../controller/loginControler.dart';
@@ -35,15 +37,16 @@ class _OfflinescreenState extends State<Offlinescreen> {
   // File? _image;
 
   Future<void> _submitForm(Map<String, dynamic> lead) async {
-    var request = http.MultipartRequest(
-        'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
+    var request = http.MultipartRequest('POST',
+        Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.storeData));
+    // 'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
 
     // Include any necessary headers here
     request.headers['Accept'] = 'application/json';
     request.headers['Authorization'] = 'Bearer ${loginController.logtoken}';
 
     request.fields['name'] = lead['name'] ?? "";
-    request.fields['user_id '] = lead['user_id'] ?? "";
+    request.fields['user_id'] = lead['user_id'].toString();
     request.fields['contact_number'] = lead['contact_number'] ?? "";
     request.fields['whats_app'] = lead['whats_app'] ?? 0;
     request.fields['email'] = lead['email'] ?? "";
@@ -106,16 +109,20 @@ class _OfflinescreenState extends State<Offlinescreen> {
     }
   }
 
-  Future<void> _deleteLead(int id) async {
+  Future<void> _deleteLead(int id, bool snack) async {
     try {
       await _databaseService.deleteLead(id);
       _fetchLeads(); // Refresh the list
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Lead deleted')));
+      if (snack == true) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Lead deleted')));
+      }
     } catch (e) {
-      print("Delete failed with error: $e");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to delete lead')));
+      if (snack == true) {
+        print("Delete failed with error: $e");
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to delete lead')));
+      }
     }
   }
 
@@ -165,19 +172,19 @@ class _OfflinescreenState extends State<Offlinescreen> {
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: _leads,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+              builder: (context, leads) {
+                if (leads.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                } else if (leads.hasError) {
+                  return Center(child: Text('Error: ${leads.error}'));
+                } else if (!leads.hasData || leads.data!.isEmpty) {
                   return Center(child: Text('No leads found.'));
                 } else {
                   return ListView.separated(
                     separatorBuilder: (context, index) => Divider(),
-                    itemCount: snapshot.data!.length,
+                    itemCount: leads.data!.length,
                     itemBuilder: (context, index) {
-                      final lead = snapshot.data![index];
+                      final lead = leads.data![index];
                       return Container(
                         padding: EdgeInsets.all(10.0),
                         margin: EdgeInsets.symmetric(
@@ -190,8 +197,7 @@ class _OfflinescreenState extends State<Offlinescreen> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 2,
                               blurRadius: 5,
-                              offset:
-                                  Offset(0, 3), // changes position of shadow
+                              offset: Offset(0, 3),
                             ),
                           ],
                         ),
@@ -226,12 +232,26 @@ class _OfflinescreenState extends State<Offlinescreen> {
                                 ElevatedButton(
                                   onPressed: () {
                                     _submitForm(lead);
+                                    _deleteLead(lead['id'], false);
                                   },
                                   child: Text("Send"),
                                 ),
                                 IconButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              AddDetailsScreen(
+                                                  // lead: lead,
+                                                  ),
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(Icons.edit_calendar)),
+                                IconButton(
                                   onPressed: () {
-                                    _deleteLead(lead['id']);
+                                    _deleteLead(lead['id'], true);
                                   },
                                   icon: Icon(Icons.delete),
                                   style: ElevatedButton.styleFrom(

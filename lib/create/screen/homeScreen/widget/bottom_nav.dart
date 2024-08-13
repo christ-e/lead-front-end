@@ -2,7 +2,6 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/list_deatils_screen.dart';
-import 'package:lead_application/create/screen/homeScreen/mapScreen/googlemap/googlemap.dart';
 import 'package:lead_application/create/screen/homeScreen/mapScreen/mapmyindia/location.dart';
 import 'package:lead_application/create/screen/homeScreen/mapScreen/mapmyindia/mapScreen.dart';
 import 'package:lead_application/create/screen/homeScreen/oflineScreen/offlineScreen.dart';
