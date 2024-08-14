@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/create/screen/credentialsScreen/login_Screen/login_screen.dart';
-import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
+import 'package:lead_application/widgets/bottom_nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginController extends GetxController {
@@ -16,6 +16,54 @@ class LoginController extends GetxController {
   var userid = "";
 
   var isLoading = false.obs;
+  // Future<void> loginWithEmail(BuildContext context) async {
+  //   var headers = {'Content-Type': 'application/json'};
+  //   var url =
+  //       Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.login);
+  //   Map body = {
+  //     'email': emailController.text.trim(),
+  //     'password': passwordController.text
+  //   };
+
+  //   http.Response response =
+  //       await http.post(url, body: jsonEncode(body), headers: headers);
+  //   print(response.body);
+
+  //   if (response.statusCode == 200) {
+  //     isLoading.value = true;
+
+  //     final data = jsonDecode(response.body);
+  //     final token = data['token'];
+  //     print('Decoded data: $data');
+
+  //     if (token != null) {
+  //       final prefs = await SharedPreferences.getInstance();
+  //       await prefs.setString('token', token);
+
+  //       // Accessing the id from the key "0"
+  //       if (data.containsKey("0") && data["0"].containsKey("id")) {
+  //         final userId = data["0"]["id"];
+  //         await prefs.setInt('userId', userId);
+  //         // userid = userId;
+  //         log('User ID stored: $userId');
+  //       } else {
+  //         print('User ID not found in response data');
+  //       }
+  //       logtoken = token;
+  //       log('Login successful, token stored: $logtoken');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Login Success')),
+  //       );
+  //       Get.off(BottomNav());
+  //     } else {
+  //       print('Token not found in response data');
+  //     }
+  //   } else {
+  //     isLoading.value = false;
+  //     print('Login failed: ${response.body}');
+  //   }
+  //   isLoading.value = false;
+  // }
   Future<void> loginWithEmail(BuildContext context) async {
     var headers = {'Content-Type': 'application/json'};
     var url =
@@ -37,19 +85,18 @@ class LoginController extends GetxController {
       print('Decoded data: $data');
 
       if (token != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token);
+        logtoken = token;
+        await saveData();
 
-        // Accessing the id from the key "0"
         if (data.containsKey("0") && data["0"].containsKey("id")) {
           final userId = data["0"]["id"];
+          final prefs = await SharedPreferences.getInstance();
           await prefs.setInt('userId', userId);
-          // userid = userId;
           log('User ID stored: $userId');
         } else {
           print('User ID not found in response data');
         }
-        logtoken = token;
+
         log('Login successful, token stored: $logtoken');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login Success')),
@@ -65,10 +112,15 @@ class LoginController extends GetxController {
     isLoading.value = false;
   }
 
-  void saveData() async {
+  saveData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('logtoken', logtoken);
   }
+
+  // void saveData() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   await prefs.setString('logtoken', logtoken);
+  // }
 
   //logout
   Future<void> logout(BuildContext context) async {

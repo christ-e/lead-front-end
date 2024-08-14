@@ -15,7 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/controller/loginControler.dart';
-import 'package:lead_application/create/screen/homeScreen/widget/bottom_nav.dart';
+import 'package:lead_application/widgets/bottom_nav.dart';
 import 'package:lead_application/model/leadModel.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -26,6 +26,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_animated_button/flutter_animated_button.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../db_connection/services/location_services.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   final Lead? lead; //add
@@ -63,14 +65,20 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   late Future<List<Map<String, dynamic>>> _leads;
 
   LoginController loginController = Get.put(LoginController());
+  final LocationService _locationService = LocationService();
 
   @override
   void initState() {
     super.initState();
     // fetchUsers();
     _fetchLeads();
+    _locationService.onLocationUpdated = (latitude, longitude) {
+      setState(() {
+        _locationService.startLogging();
+        _fetchStates();
+      });
+    };
 
-    _fetchStates();
     if (widget.lead != null) {
       _initializeLeadData(widget.lead!);
     }

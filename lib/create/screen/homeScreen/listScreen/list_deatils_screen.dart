@@ -12,9 +12,11 @@ import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/controller/loginControler.dart';
 import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/create/screen/homeScreen/listScreen/widget/detais_list.dart';
+import 'package:lead_application/widgets/logout_Button.dart';
 import 'package:lead_application/model/follow_upDateModel.dart';
 import 'package:lead_application/db_connection/riverpod/api_functions.dart';
 import 'package:http/http.dart' as http;
+import 'package:lead_application/widgets/side_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ListScreen extends ConsumerWidget {
@@ -130,30 +132,9 @@ class ListScreen extends ConsumerWidget {
           'Leads List',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-              //logout
-              onPressed: () {
-                loginController.logout(context);
-              },
-              iconSize: 35,
-              icon: const Row(
-                children: [
-                  Text(
-                    "",
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(255, 75, 75, 75)),
-                  ),
-                  Icon(Icons.logout_rounded),
-                  SizedBox(
-                    width: 10,
-                  )
-                ],
-              ))
-        ],
+        actions: [LogoutButton(loginController: loginController)],
       ),
+      drawer: SideBar(),
       body: leadsAsyncValue.when(
         data: (leads) => RefreshIndicator(
           onRefresh: () async {

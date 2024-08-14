@@ -9,7 +9,6 @@ import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:lead_application/controller/loginControler.dart';
 
 class MapScreen extends StatefulWidget {
@@ -179,18 +178,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             FloatingActionButton(
               onPressed: () async {
-                final lastCoordinate = await _fetchLastCoordinate();
-                if (lastCoordinate != null) {
-                  _fetchRoute(
-                    LatLng(10.178890, 76.330380),
-                    LatLng(
-                      (lastCoordinate['latitude']),
-                      (lastCoordinate['longitude']),
-                    ),
-                  );
-                } else {
-                  print('No coordinates found in the database');
-                }
+                await _fetchAndPlotCoordinates();
               },
               backgroundColor: Colors.white,
               child: Icon(Icons.directions),
@@ -260,20 +248,29 @@ class _MapScreenState extends State<MapScreen> {
   void _addRouteToMap(List<LatLng> routeCoordinates) {
     _mapController.addLine(LineOptions(
       geometry: routeCoordinates,
-      lineColor: "#ff0000",
+      lineColor: "#0000FF",
       lineWidth: 5.0,
       lineOpacity: 0.8,
     ));
   }
 
-  Future<Map<String, dynamic>?> _fetchLastCoordinate() async {
+  Future<void> _fetchAndPlotCoordinates() async {
     final databasePath = await getDatabasesPath();
     final path = join(databasePath,
         'coordinates.db'); // Replace with your actual database name
     final Database db = await openDatabase(path);
-    final List<Map<String, dynamic>> result = await db.rawQuery(
-        'SELECT latitude, longitude FROM coordinates ORDER BY id DESC LIMIT 1');
-    return result.isNotEmpty ? result.first : null;
+    final List<Map<String, dynamic>> result = await db.query('coordinates',
+        orderBy: 'id ASC'); // Fetch all coordinates ordered by id
+
+    if (result.isNotEmpty) {
+      final List<LatLng> coordinates = result.map((coord) {
+        return LatLng(coord['latitude'], coord['longitude']);
+      }).toList();
+
+      _addRouteToMap(coordinates);
+    } else {
+      print('No coordinates found in the database');
+    }
   }
 
   void _addMarker(double lat, double lon, Lead lead) async {

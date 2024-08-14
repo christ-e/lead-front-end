@@ -113,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (_formKey.currentState!.saveAndValidate()) {
                               loginController.isLoading.value = true;
                               loginController.loginWithEmail(context);
+                              // loginController.saveData();
                             }
                           },
                           child: Obx(() => loginController.isLoading.value

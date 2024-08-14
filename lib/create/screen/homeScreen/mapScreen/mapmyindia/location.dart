@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lead_application/db_connection/services/location_services.dart';
 
-class MyHomePage extends StatefulWidget {
+class Logger extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _LoggerState createState() => _LoggerState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _LoggerState extends State<Logger> {
   final LocationService _locationService = LocationService();
   List<Map<String, dynamic>> _coordinates = [];
 
@@ -50,8 +50,14 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           IconButton(
             onPressed: _clearData,
-            icon: Icon(Icons.cleaning_services_outlined),
+            icon: Icon(Icons.delete_forever_sharp),
           ),
+          IconButton(
+            onPressed: () {
+              _locationService.stopLogging();
+            },
+            icon: Icon(Icons.stop_circle),
+          )
         ],
       ),
       body: Center(
