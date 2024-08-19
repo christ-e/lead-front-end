@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:lead_application/controller/loginControler.dart';
-import 'package:lead_application/create/screen/homeScreen/mapScreen/mapmyindia/location.dart';
+import 'package:lead_application/create/screen/drawerScreen/loggerScreen.dart';
+import 'package:lead_application/create/screen/drawerScreen/settingsScreen.dart';
 import 'package:lead_application/db_connection/services/database_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../create/screen/homeScreen/mapScreen/mapmyindia_track/trackLocation.dart';
+import '../create/screen/drawerScreen/locationTravelledScreen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -24,6 +25,11 @@ class _SideBarState extends State<SideBar> {
     super.initState();
     _userData = fetchUserData();
   }
+
+  // Future<void> storeUserName(String name) async {
+  //   final username = await SharedPreferences.getInstance();
+  //   await username.setString('userName', name);
+  // }
 
   Future<Map<String, String>> fetchUserData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -47,9 +53,13 @@ class _SideBarState extends State<SideBar> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      // await storeUserName(data['name']);
+      final username = await SharedPreferences.getInstance();
+      await username.setString('userName', data['name']);
       return {
         'name': data['name'],
         'email': data['email'],
+        'phone': data['phone'],
       };
     } else {
       throw Exception('Failed to load user data');
@@ -143,7 +153,7 @@ class _SideBarState extends State<SideBar> {
             leading: Icon(Icons.home),
             title: Text('Home'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
+              Navigator.pop(context);
             },
           ),
           ListTile(
@@ -162,7 +172,7 @@ class _SideBarState extends State<SideBar> {
               "assets/images/map_icon.png",
               scale: 10,
             ),
-            title: Text('location Travelled'),
+            title: Text('Location Travelled'),
             onTap: () {
               Navigator.push(
                   context,
@@ -178,7 +188,7 @@ class _SideBarState extends State<SideBar> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => Logger(),
+                    builder: (context) => SettingsScreen(),
                   ));
             },
           ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -39,7 +41,6 @@ class _OfflinescreenState extends State<Offlinescreen> {
   Future<void> _submitForm(Map<String, dynamic> lead) async {
     var request = http.MultipartRequest('POST',
         Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.storeData));
-    // 'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
 
     request.headers['Accept'] = 'application/json';
     request.headers['Authorization'] = 'Bearer ${loginController.logtoken}';
@@ -72,6 +73,7 @@ class _OfflinescreenState extends State<Offlinescreen> {
       if (response.statusCode == 201 || response.statusCode == 200) {
         print("Request successful");
         _showAlertDialog(context, 'Success', 'Form submitted successfully');
+        _deleteLead(lead['id'], false);
       } else {
         var responseBody = await response.stream.bytesToString();
         print("Request failed with status: ${response.statusCode}");
@@ -95,7 +97,37 @@ class _OfflinescreenState extends State<Offlinescreen> {
     try {
       List<Map<String, dynamic>> leads = await _leads;
       for (var lead in leads) {
-        await _submitForm(lead);
+        var request = http.MultipartRequest(
+            'POST',
+            Uri.parse(
+                ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.storeData));
+        // 'POST', Uri.parse('http://127.0.0.1:8000/api/store'));
+
+        request.headers['Accept'] = 'application/json';
+        request.headers['Authorization'] = 'Bearer ${loginController.logtoken}';
+
+        request.fields['name'] = lead['name'] ?? "";
+        request.fields['user_id'] = lead['user_id'].toString();
+        request.fields['contact_number'] = lead['contact_number'] ?? "";
+        request.fields['whats_app'] = lead['whats_app'] ?? 0;
+        request.fields['email'] = lead['email'] ?? "";
+        request.fields['address'] = lead['address'] ?? "";
+        request.fields['state'] = lead['state'] ?? "";
+        request.fields['district'] = lead['district'] ?? "";
+        request.fields['city'] = lead['city'] ?? "";
+        request.fields['location_coordinates'] =
+            lead['location_coordinates'] ?? "";
+        request.fields['location_lat'] = lead['location_lat'] ?? "";
+        request.fields['location_log'] = lead['location_log'] ?? "";
+        request.fields['follow_up'] = lead['follow_up'] ?? "";
+        request.fields['follow_up_date'] = lead['follow_up_date'] ?? "";
+        request.fields['lead_priority'] = lead['lead_priority'] ?? "";
+
+        if (lead['image_path'] != null && lead['image_path'] != null) {
+          var file = await http.MultipartFile.fromPath(
+              'image_path', lead['image_path']);
+          request.files.add(file);
+        }
       }
       _showAlertDialog(context, 'Success', 'All leads have been synced.');
     } catch (e) {
@@ -123,6 +155,12 @@ class _OfflinescreenState extends State<Offlinescreen> {
             .showSnackBar(SnackBar(content: Text('Failed to delete lead')));
       }
     }
+  }
+
+  void clearAllLeads() async {
+    DatabaseService dbService = DatabaseService.instance;
+    await dbService.deleteAllLeads();
+    print("All leads deleted");
   }
 
   void _showAlertDialog(
@@ -158,6 +196,21 @@ class _OfflinescreenState extends State<Offlinescreen> {
         );
       },
     );
+  }
+
+  ImageProvider _getImageProvider(
+    String? imagePath,
+  ) {
+    if (imagePath == null || imagePath.isEmpty) {
+      // Return a default image or placeholder if the image path is null or empty
+      return AssetImage('assets/images/placeholder.png');
+    } else if (Uri.parse(imagePath).isAbsolute) {
+      // Return a NetworkImage if the image path is a valid URL
+      return NetworkImage(imagePath);
+    } else {
+      // Return a FileImage if the image path is a local file path
+      return FileImage(File(imagePath));
+    }
   }
 
   @override
@@ -202,19 +255,12 @@ class _OfflinescreenState extends State<Offlinescreen> {
                                             'Email: ${lead['email'] ?? "No Email"}'),
                                         Text(
                                             'Address: ${lead['address'] ?? "N/A"}'),
-                                        // Uncomment the following lines if needed
                                         Text(
                                             'WhatsApp: ${lead['whats_app'] ?? "N/A"}'),
                                         Text(
                                             'Follow Up Date: ${lead['follow_up_date'] ?? "N/A"}'),
                                         Text(
                                             'Location Coordinates: ${lead['location_coordinates'] ?? "N/A"}'),
-                                        // Text(
-                                        //     'Location Latitude: ${lead['location_lat'] ?? "N/A"}'),
-                                        // Text(
-                                        //     'Location Longitude: ${lead['location_log'] ?? "N/A"}'),
-                                        Text(
-                                            'Profile Image: ${lead['image_path'] ?? "No"}'),
                                         Text(
                                             'State: ${lead['state'] ?? "N/A"}'),
                                         Text('City: ${lead['city'] ?? "N/A"}'),
@@ -236,7 +282,7 @@ class _OfflinescreenState extends State<Offlinescreen> {
                             );
                           },
                           child: Container(
-                            height: 250,
+                            height: 330,
                             padding: EdgeInsets.all(10.0),
                             margin: EdgeInsets.symmetric(
                                 vertical: 5.0, horizontal: 10.0),
@@ -255,27 +301,53 @@ class _OfflinescreenState extends State<Offlinescreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  lead['name'] ?? "No Name",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.0,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      lead['name'] ?? "No Name",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16.0,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 220,
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.7),
+                                            spreadRadius: 2,
+                                            blurRadius: 10,
+                                            offset: Offset(0, 10),
+                                          ),
+                                        ],
+                                        color: Colors.amber,
+                                      ),
+                                      child: Image(
+                                        image: _getImageProvider(
+                                          lead['image_path'],
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
+                                      width: 90,
+                                      height: 90,
+                                    ),
+                                    // CircleAvatar(
+                                    //   radius: 40,
+                                    // )
+                                  ],
                                 ),
                                 SizedBox(height: 5.0),
                                 Text(lead['contact_number'] ?? ""),
                                 Text(lead['email'] ?? ""),
                                 Text(lead['address'] ?? ""),
-                                // Text(lead['whats_app'] ?? ""),
                                 Text(lead['follow_up_date'] ?? ""),
                                 Text(lead['location_coordinates'] ?? ""),
-                                // Text(lead['location_lat'] ?? ""),
-                                // Text(lead['location_log'] ?? ""),
-                                // Text(lead['image_path'] ?? ""),
-                                // Text(lead['state'] ?? ""),
-                                // Text(lead['city'] ?? ""),
-                                // Text(lead['district'] ?? ""),
-                                SizedBox(height: 50),
+                                SizedBox(height: 40),
+                                Divider(),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -283,7 +355,6 @@ class _OfflinescreenState extends State<Offlinescreen> {
                                     ElevatedButton(
                                       onPressed: () {
                                         _submitForm(lead);
-                                        _deleteLead(lead['id'], false);
                                       },
                                       child: Text("Send"),
                                     ),
@@ -326,7 +397,10 @@ class _OfflinescreenState extends State<Offlinescreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: isLoading ? null : _syncAllLeads,
+              onPressed: () {
+                isLoading ? null : _syncAllLeads;
+                clearAllLeads();
+              },
               child: isLoading ? CircularProgressIndicator() : Text('Sync'),
             ),
           ),

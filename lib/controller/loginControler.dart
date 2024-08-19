@@ -14,57 +14,13 @@ class LoginController extends GetxController {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   var logtoken = "";
   var userid = "";
+  var username = "";
 
   var isLoading = false.obs;
-  // Future<void> loginWithEmail(BuildContext context) async {
-  //   var headers = {'Content-Type': 'application/json'};
-  //   var url =
-  //       Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.login);
-  //   Map body = {
-  //     'email': emailController.text.trim(),
-  //     'password': passwordController.text
-  //   };
 
-  //   http.Response response =
-  //       await http.post(url, body: jsonEncode(body), headers: headers);
-  //   print(response.body);
-
-  //   if (response.statusCode == 200) {
-  //     isLoading.value = true;
-
-  //     final data = jsonDecode(response.body);
-  //     final token = data['token'];
-  //     print('Decoded data: $data');
-
-  //     if (token != null) {
-  //       final prefs = await SharedPreferences.getInstance();
-  //       await prefs.setString('token', token);
-
-  //       // Accessing the id from the key "0"
-  //       if (data.containsKey("0") && data["0"].containsKey("id")) {
-  //         final userId = data["0"]["id"];
-  //         await prefs.setInt('userId', userId);
-  //         // userid = userId;
-  //         log('User ID stored: $userId');
-  //       } else {
-  //         print('User ID not found in response data');
-  //       }
-  //       logtoken = token;
-  //       log('Login successful, token stored: $logtoken');
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Login Success')),
-  //       );
-  //       Get.off(BottomNav());
-  //     } else {
-  //       print('Token not found in response data');
-  //     }
-  //   } else {
-  //     isLoading.value = false;
-  //     print('Login failed: ${response.body}');
-  //   }
-  //   isLoading.value = false;
-  // }
-  Future<void> loginWithEmail(BuildContext context) async {
+  Future<void> loginWithEmail(
+    BuildContext context,
+  ) async {
     var headers = {'Content-Type': 'application/json'};
     var url =
         Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.login);
@@ -83,13 +39,13 @@ class LoginController extends GetxController {
       final data = jsonDecode(response.body);
       final token = data['token'];
       print('Decoded data: $data');
-
       if (token != null) {
         logtoken = token;
         await saveData();
 
         if (data.containsKey("0") && data["0"].containsKey("id")) {
           final userId = data["0"]["id"];
+          username = data["0"]["name"];
           final prefs = await SharedPreferences.getInstance();
           await prefs.setInt('userId', userId);
           log('User ID stored: $userId');
@@ -117,11 +73,6 @@ class LoginController extends GetxController {
     await prefs.setString('logtoken', logtoken);
   }
 
-  // void saveData() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   await prefs.setString('logtoken', logtoken);
-  // }
-
   //logout
   Future<void> logout(BuildContext context) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -139,7 +90,7 @@ class LoginController extends GetxController {
       await prefs.clear();
 
       logtoken = "";
-      emailController.clear();
+      // emailController.clear();
       passwordController.clear();
       isLoading.value = false;
       Get.offAll(() => LoginScreen());

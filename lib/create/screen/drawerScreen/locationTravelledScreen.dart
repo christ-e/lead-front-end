@@ -1,13 +1,10 @@
-import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:lead_application/model/leadModel.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import 'package:get/get.dart';
 import 'package:lead_application/controller/loginControler.dart';
 
-import '../../../../../db_connection/services/location_services.dart';
+import '../../../db_connection/services/location_services.dart';
 
 class LocationTrack extends StatefulWidget {
   const LocationTrack({super.key});
@@ -24,16 +21,17 @@ class _LocationTrackState extends State<LocationTrack> {
   @override
   void initState() {
     super.initState();
+    _fetchAndPlotCoordinates();
     _initializeMap();
   }
 
   void _initializeMap() {
-    MapmyIndiaAccountManager.setMapSDKKey('092687bde0df9929d798b1e1ceafc46d');
-    MapmyIndiaAccountManager.setRestAPIKey('092687bde0df9929d798b1e1ceafc46d');
+    MapmyIndiaAccountManager.setMapSDKKey('a8a3dd13fefde11e7d659443db7774a6');
+    MapmyIndiaAccountManager.setRestAPIKey('a8a3dd13fefde11e7d659443db7774a6');
     MapmyIndiaAccountManager.setAtlasClientId(
-        '96dHZVzsAuvbhuzGkwF-OQJ6j6IWRyqCoaQudy9pQ9Nu8r8EYryJmqqQ-ble0SHjnakEuHnq7iwgmb19ibIuCg==');
+        '96dHZVzsAut3fFLedvk3GCAmKZcYO8Zz_Z5wHV9RGJNdYSzvfSRSAveAJRSWdePKDedJm0cuB4v3S77yw4luFQzi_lR3URyM');
     MapmyIndiaAccountManager.setAtlasClientSecret(
-        'lrFxI-iSEg_n5Ei3B-_HW9lCAL22Bt9LcQhtflLilZS5b7lLymqZYTHW1FvE_Nonx9iGbJ6Le8aTnn0xhMRHykl73Yl1RExg');
+        'lrFxI-iSEg8zm13Fcz_LT5PDzmcuY9TNEmotLh0bi5MZ8bREn0rJmYhO2pJnPKownUNDY8CdNJgjQAWB6ZVXfDjrjreNFHIL0ka_nD7A7WQ=');
   }
 
   @override
@@ -77,22 +75,6 @@ class _LocationTrackState extends State<LocationTrack> {
     );
   }
 
-  Future<void> _fetchRoute(LatLng start, LatLng end) async {
-    final response = await http.get(Uri.parse(
-      'https://apis.mapmyindia.com/advancedmaps/v1/092687bde0df9929d798b1e1ceafc46d/route_adv/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=polyline&overview=full',
-    ));
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      final String encodedPolyline = data['routes'][0]['geometry'];
-      final List<LatLng> routeCoordinates = decodePolyline(encodedPolyline);
-
-      _addRouteToMap(routeCoordinates);
-    } else {
-      throw Exception('Failed to fetch route');
-    }
-  }
-
   List<LatLng> decodePolyline(String encoded) {
     List<LatLng> poly = [];
     int index = 0, len = encoded.length;
@@ -126,7 +108,7 @@ class _LocationTrackState extends State<LocationTrack> {
   void _addRouteToMap(List<LatLng> routeCoordinates) {
     _mapController.addLine(LineOptions(
       geometry: routeCoordinates,
-      lineColor: "#0000FF",
+      lineColor: "#FA2214",
       lineWidth: 5.0,
       lineOpacity: 0.8,
     ));
@@ -149,16 +131,5 @@ class _LocationTrackState extends State<LocationTrack> {
     } catch (e) {
       print('Error fetching coordinates: $e');
     }
-  }
-
-  void _addMarker(double lat, double lon, Lead lead) async {
-    Symbol symbol = await _mapController.addSymbol(SymbolOptions(
-      geometry: LatLng(lat, lon),
-      iconImage: 'assets/images/red_location.png',
-      iconSize: 0.1,
-      textField: lead.name,
-      textSize: 20,
-      textAnchor: "right",
-    ));
   }
 }

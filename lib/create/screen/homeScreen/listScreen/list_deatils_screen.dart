@@ -103,7 +103,6 @@ class ListScreen extends ConsumerWidget {
       try {
         final response = await http.get(Uri.parse(
             '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.follow_upData}$leadId'));
-        // .get(Uri.parse('http://127.0.0.1:8000/api/follow-ups/$leadId'));
 
         if (response.statusCode == 200) {
           List jsonResponse =

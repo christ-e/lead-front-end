@@ -1,13 +1,18 @@
 // ignore_for_file: prefer_const_constructors, unnecessary_import
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:lead_application/controller/loginControler.dart';
 import 'package:lead_application/create/screen/credentialsScreen/register_screen/createUser.dart';
 import 'package:lead_application/validator/validation.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +23,22 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+
   bool _obscurePassword = true;
+  String? username;
+
+  @override
+  void initState() {
+    super.initState();
+    // _loadUserName();
+  }
+
+  // Future<void> _loadUserName() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   setState(() {
+  //     username = prefs.getString("userName");
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -31,25 +51,73 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(30.0),
           child: Column(
             children: [
-              const SizedBox(height: 150),
+              const SizedBox(height: 100),
               Padding(
                 padding: const EdgeInsets.only(bottom: 30),
                 child: Container(
-                  width: 400,
-                  height: 80,
-                  child: Image.asset("assets/images/ekatra_logo.png"),
+                  width: 250,
+                  height: 200,
+                  child: Image.asset(
+                    "assets/images/login_logo.png",
+                    // fit: BoxFit.fill,
+                  ),
                 ),
               ),
-              Text(
-                "Welcome back",
-                style: Theme.of(context).textTheme.headlineLarge,
-              ),
+              loginController.username == hashCode
+                  ? Text(
+                      "Welcome",
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    )
+                  : Column(
+                      children: [
+                        Text(
+                          "Welcome back",
+                          style: GoogleFonts.agbalumo(
+                            fontSize: 30,
+                            shadows: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          "${loginController.username}",
+                          style: GoogleFonts.akshar(
+                              fontSize: 30,
+                              decorationThickness: 3,
+                              letterSpacing: 3,
+                              shadows: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  spreadRadius: 2,
+                                  blurRadius: 5,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                              decorationStyle: TextDecorationStyle.dotted),
+                        ),
+                      ],
+                    ),
               const SizedBox(height: 10),
-              Text(
-                "Login to your account",
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 60),
+              loginController.username == null
+                  ? Column(
+                      children: [
+                        Text(
+                          "Login to your account",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 60),
+                      ],
+                    )
+                  : Text(
+                      "Login to your account",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+              const SizedBox(height: 10),
               FormBuilder(
                 key: _formKey,
                 child: Column(
@@ -113,7 +181,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (_formKey.currentState!.saveAndValidate()) {
                               loginController.isLoading.value = true;
                               loginController.loginWithEmail(context);
-                              // loginController.saveData();
                             }
                           },
                           child: Obx(() => loginController.isLoading.value
@@ -143,10 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
-                        // Text("Or"),
-                        SizedBox(
-                          height: 10,
-                        ),
+                        SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

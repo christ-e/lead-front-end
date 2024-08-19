@@ -94,6 +94,11 @@ class DatabaseService {
     );
   }
 
+  Future<int> deleteAllLeads() async {
+    final db = await getDatabase();
+    return await db.delete(_tableName);
+  }
+
   Future<List<Map<String, dynamic>>> getAllLeads() async {
     final db = await getDatabase();
     List<Map<String, dynamic>> leads = await db.query(_tableName);

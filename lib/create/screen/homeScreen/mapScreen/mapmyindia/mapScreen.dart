@@ -34,12 +34,12 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _initializeMap() {
-    MapmyIndiaAccountManager.setMapSDKKey('092687bde0df9929d798b1e1ceafc46d');
-    MapmyIndiaAccountManager.setRestAPIKey('092687bde0df9929d798b1e1ceafc46d');
+    MapmyIndiaAccountManager.setMapSDKKey('a8a3dd13fefde11e7d659443db7774a6');
+    MapmyIndiaAccountManager.setRestAPIKey('a8a3dd13fefde11e7d659443db7774a6');
     MapmyIndiaAccountManager.setAtlasClientId(
-        '96dHZVzsAuvbhuzGkwF-OQJ6j6IWRyqCoaQudy9pQ9Nu8r8EYryJmqqQ-ble0SHjnakEuHnq7iwgmb19ibIuCg==');
+        '96dHZVzsAut3fFLedvk3GCAmKZcYO8Zz_Z5wHV9RGJNdYSzvfSRSAveAJRSWdePKDedJm0cuB4v3S77yw4luFQzi_lR3URyM');
     MapmyIndiaAccountManager.setAtlasClientSecret(
-        'lrFxI-iSEg_n5Ei3B-_HW9lCAL22Bt9LcQhtflLilZS5b7lLymqZYTHW1FvE_Nonx9iGbJ6Le8aTnn0xhMRHykl73Yl1RExg');
+        'lrFxI-iSEg8zm13Fcz_LT5PDzmcuY9TNEmotLh0bi5MZ8bREn0rJmYhO2pJnPKownUNDY8CdNJgjQAWB6ZVXfDjrjreNFHIL0ka_nD7A7WQ=');
 
     _fetchLeads();
     _checkLocationPermission();
@@ -110,11 +110,16 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
 
-    _currentLocationMarker = await _mapController.addSymbol(SymbolOptions(
-      geometry: _currentLatLng,
-      iconImage: 'assets/images/current_location.png',
-      iconSize: 0.3,
-    ));
+    _currentLocationMarker = await _mapController.addSymbol(
+      SymbolOptions(
+          geometry: _currentLatLng,
+          iconImage: 'assets/images/location_pin_icon.png',
+          iconSize: 0.2,
+          textField: "You Are Here",
+          textColor: "red",
+          textAnchor: "top",
+          textSize: 20),
+    );
 
     _startLocationUpdates();
   }
@@ -172,16 +177,6 @@ class _MapScreenState extends State<MapScreen> {
               },
               backgroundColor: Colors.white,
               child: Icon(Icons.more_vert),
-            ),
-            SizedBox(
-              height: 20,
-            ),
-            FloatingActionButton(
-              onPressed: () async {
-                await _fetchAndPlotCoordinates();
-              },
-              backgroundColor: Colors.white,
-              child: Icon(Icons.directions),
             ),
             SizedBox(
               height: 20,
@@ -252,25 +247,6 @@ class _MapScreenState extends State<MapScreen> {
       lineWidth: 5.0,
       lineOpacity: 0.8,
     ));
-  }
-
-  Future<void> _fetchAndPlotCoordinates() async {
-    final databasePath = await getDatabasesPath();
-    final path = join(databasePath,
-        'coordinates.db'); // Replace with your actual database name
-    final Database db = await openDatabase(path);
-    final List<Map<String, dynamic>> result = await db.query('coordinates',
-        orderBy: 'id ASC'); // Fetch all coordinates ordered by id
-
-    if (result.isNotEmpty) {
-      final List<LatLng> coordinates = result.map((coord) {
-        return LatLng(coord['latitude'], coord['longitude']);
-      }).toList();
-
-      _addRouteToMap(coordinates);
-    } else {
-      print('No coordinates found in the database');
-    }
   }
 
   void _addMarker(double lat, double lon, Lead lead) async {

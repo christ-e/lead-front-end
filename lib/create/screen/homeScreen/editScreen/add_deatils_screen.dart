@@ -26,8 +26,9 @@ import 'package:intl/intl.dart';
 import 'package:flutter_animated_button/flutter_animated_button.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-import '../../../../db_connection/services/location_services.dart';
+import '../../../../db_connection/services/place_services.dart/state.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   final Lead? lead; //add
@@ -65,19 +66,13 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   late Future<List<Map<String, dynamic>>> _leads;
 
   LoginController loginController = Get.put(LoginController());
-  final LocationService _locationService = LocationService();
 
   @override
   void initState() {
     super.initState();
-    // fetchUsers();
     _fetchLeads();
-    _locationService.onLocationUpdated = (latitude, longitude) {
-      setState(() {
-        _locationService.startLogging();
-        _fetchStates();
-      });
-    };
+
+    _fetchStates();
 
     if (widget.lead != null) {
       _initializeLeadData(widget.lead!);
@@ -225,6 +220,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     if (_image != null) {
       var file = await http.MultipartFile.fromPath('image_path', _image!.path);
       request.files.add(file);
+      log(file.filename.toString());
     }
 
     var response = await request.send();
@@ -784,6 +780,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     ),
                     AnimatedButton(
                       onPress: () {
+                        _NetworkSubmit();
                         setState(() async {
                           if (_formKey.currentState!.validate()) {
                             _formKey.currentState!.save();
@@ -831,6 +828,42 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _NetworkSubmit() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final formKey = _formKey.currentState!.value;
+      var formData = Map<String, dynamic>.from(_formKey.currentState!.value);
+
+      log('Form Data: $formData');
+
+      // Check network connection
+      var connectivityResult = await (Connectivity().checkConnectivity());
+
+      if (connectivityResult == ConnectivityResult.none) {
+        // No internet connection, submit offline
+        _submitForm_Offline(formData);
+        print("Request successful");
+        _showAlertDialog(context, 'Success', 'Form submitted Offline');
+      } else {
+        // Internet connection available, submit online
+        if (widget.lead != null) {
+          _updateForm(formKey);
+        } else {
+          log(formKey.toString());
+          _submitForm(formKey, _location);
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit form'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      print("Failed");
+    }
   }
 
   Future<void> pickContact() async {
@@ -955,10 +988,37 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     }
   }
 
+  // Future<void> _fetchStates() async {
+  //   final response = await http.get(Uri.parse(
+  //     '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}',
+  //   ));
+  //   if (response.statusCode == 200 || response.statusCode == 201) {
+  //     final List<dynamic> states = jsonDecode(response.body);
+
+  //     // Insert the fetched states into the SQLite table
+  //     for (var state in states) {
+  //       await StateDatabaseService.instance.insertState({
+  //         'state_id': state['state_id'],
+  //         'state': state['state'],
+  //       });
+  //     }
+
+  //     // Fetch the states from the local SQLite database
+  //     final fetchedStates = await StateDatabaseService.instance.fetchStates();
+
+  //     setState(() {
+  //       _states = fetchedStates;
+  //       _selectedState = widget.lead?.state_id;
+  //     });
+  //   } else {
+  //     throw Exception('Failed to load states');
+  //   }
+  // }
+
   Future<void> _fetchDistricts(String stateId) async {
     final response = await http.get(Uri.parse(
         '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchDistrict}$stateId'));
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       setState(() {
         _districts = jsonDecode(response.body);
         _selectedDistrict = widget.lead?.district_id;
@@ -969,7 +1029,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   Future<void> _fetchCities(String districtId) async {
     final response = await http.get(Uri.parse(
         '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchcity}$districtId'));
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       setState(() {
         _cities = jsonDecode(response.body);
         _selectedCity = widget.lead?.city_id;
