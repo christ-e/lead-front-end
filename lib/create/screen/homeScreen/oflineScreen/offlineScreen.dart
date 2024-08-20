@@ -36,8 +36,6 @@ class _OfflinescreenState extends State<Offlinescreen> {
     });
   }
 
-  // File? _image;
-
   Future<void> _submitForm(Map<String, dynamic> lead) async {
     var request = http.MultipartRequest('POST',
         Uri.parse(ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.storeData));
@@ -143,7 +141,7 @@ class _OfflinescreenState extends State<Offlinescreen> {
   Future<void> _deleteLead(int id, bool snack) async {
     try {
       await _databaseService.deleteLead(id);
-      _fetchLeads(); // Refresh the list
+      _fetchLeads();
       if (snack == true) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Lead deleted')));

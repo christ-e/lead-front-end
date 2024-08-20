@@ -92,6 +92,9 @@ class ListScreen extends ConsumerWidget {
 
   Widget build(BuildContext context, WidgetRef ref) {
     List<FollowUp> followUpDate = [];
+    final counterProvider = StateProvider<int>((ref) => 0);
+    int counter = ref.watch(counterProvider); // read the state
+    // ref.read(counterProvider.notifier).state++; // update the state
 
     LoginController loginController = Get.put(LoginController());
     var submitTextStyle = TextStyle(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import 'package:get/get.dart';
@@ -15,14 +16,15 @@ class LocationTrack extends StatefulWidget {
 
 class _LocationTrackState extends State<LocationTrack> {
   late MapmyIndiaMapController _mapController;
-
   LoginController loginController = Get.put(LoginController());
+  final LocationService _locationService = LocationService();
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _fetchAndPlotCoordinates();
     _initializeMap();
+    startFetchingStates();
   }
 
   void _initializeMap() {
@@ -36,6 +38,7 @@ class _LocationTrackState extends State<LocationTrack> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -108,10 +111,19 @@ class _LocationTrackState extends State<LocationTrack> {
   void _addRouteToMap(List<LatLng> routeCoordinates) {
     _mapController.addLine(LineOptions(
       geometry: routeCoordinates,
-      lineColor: "#FA2214",
+      lineColor: "#008000",
       lineWidth: 5.0,
       lineOpacity: 0.8,
     ));
+
+    if (routeCoordinates.isNotEmpty) {
+      LatLng lastCoordinate = routeCoordinates.last;
+      _mapController.addSymbol(SymbolOptions(
+        geometry: lastCoordinate,
+        iconImage: 'assets/images/location_pin_icon.png',
+        iconSize: 0.2,
+      ));
+    }
   }
 
   Future<void> _fetchAndPlotCoordinates() async {
@@ -121,15 +133,25 @@ class _LocationTrackState extends State<LocationTrack> {
 
       if (result.isNotEmpty) {
         final List<LatLng> coordinates = result.map((coord) {
+          log("location ");
           return LatLng(coord['latitude'], coord['longitude']);
         }).toList();
 
-        _addRouteToMap(coordinates);
+        setState(() {
+          _addRouteToMap(coordinates);
+        });
       } else {
         print('No coordinates found in the database');
       }
     } catch (e) {
       print('Error fetching coordinates: $e');
     }
+  }
+
+  void startFetchingStates() {
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+      _fetchAndPlotCoordinates();
+      log("location updated");
+    });
   }
 }

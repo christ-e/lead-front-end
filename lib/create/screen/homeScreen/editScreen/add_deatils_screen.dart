@@ -29,6 +29,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../../../db_connection/services/place_services.dart/state.dart';
+import '../../../../functions/projectFunctions.dart';
 
 class AddDetailsScreen extends StatefulWidget {
   final Lead? lead; //add
@@ -66,17 +67,24 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   late Future<List<Map<String, dynamic>>> _leads;
 
   LoginController loginController = Get.put(LoginController());
+  // final StateDatabaseService _dbService = StateDatabaseService.instance;
+  ProjectFunction functions = Get.put(ProjectFunction());
 
   @override
   void initState() {
     super.initState();
-    _fetchLeads();
-
     _fetchStates();
+    _fetchLeads();
 
     if (widget.lead != null) {
       _initializeLeadData(widget.lead!);
     }
+  }
+
+  @override
+  void dispose() {
+    // _dbService.clearStates();
+    super.dispose();
   }
 
   void _fetchLeads() {
@@ -520,7 +528,8 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
-                            pickContact();
+                            functions.pickContact(_formKey, context, setState);
+                            // functions.pickContact(_formKey, context, setState);
                           });
                         },
                         icon: Icon(Icons.contacts_rounded)),
@@ -656,6 +665,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                           //log(currentPosition.toString());
                           print(currentAddress);
                           _getCurrentLocation();
+                          functions.getCurrentLocation;
                           try {
                             Position position = await _determinePosition();
                             setState(() {
@@ -780,32 +790,43 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                     ),
                     AnimatedButton(
                       onPress: () {
-                        _NetworkSubmit();
-                        setState(() async {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            final formKey = _formKey.currentState!.value;
-                            var formData = Map<String, dynamic>.from(
-                                _formKey.currentState!.value);
-
-                            log('Form Data: $formData');
-                            _submitForm_Offline(formData);
-                            if (widget.lead != null) {
-                              _updateForm(formKey);
-                            } else {
-                              log(formKey.toString());
-                              _submitForm(formKey, _location);
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Failed to submit form'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            print("Failed");
-                          }
+                        setState(() {
+                          functions.NetworkSubmit(
+                              _formKey,
+                              _submitForm_Offline,
+                              _showAlertDialog,
+                              _updateForm,
+                              _submitForm,
+                              _location,
+                              context,
+                              widget);
                         });
+
+                        // setState(() async {
+                        //   if (_formKey.currentState!.validate()) {
+                        //     _formKey.currentState!.save();
+                        //     final formKey = _formKey.currentState!.value;
+                        //     var formData = Map<String, dynamic>.from(
+                        //         _formKey.currentState!.value);
+
+                        //     log('Form Data: $formData');
+                        //     _submitForm_Offline(formData);
+                        //     if (widget.lead != null) {
+                        //       _updateForm(formKey);
+                        //     } else {
+                        //       log(formKey.toString());
+                        //       _submitForm(formKey, _location);
+                        //     }
+                        //   } else {
+                        //     ScaffoldMessenger.of(context).showSnackBar(
+                        //       SnackBar(
+                        //         content: Text('Failed to submit form'),
+                        //         backgroundColor: Colors.red,
+                        //       ),
+                        //     );
+                        //     print("Failed");
+                        //   }
+                        // });
                       },
                       width: 120, // Adjusted width
                       height: 50,
@@ -830,61 +851,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     );
   }
 
-  Future<void> _NetworkSubmit() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      final formKey = _formKey.currentState!.value;
-      var formData = Map<String, dynamic>.from(_formKey.currentState!.value);
-
-      log('Form Data: $formData');
-
-      // Check network connection
-      var connectivityResult = await (Connectivity().checkConnectivity());
-
-      if (connectivityResult == ConnectivityResult.none) {
-        // No internet connection, submit offline
-        _submitForm_Offline(formData);
-        print("Request successful");
-        _showAlertDialog(context, 'Success', 'Form submitted Offline');
-      } else {
-        // Internet connection available, submit online
-        if (widget.lead != null) {
-          _updateForm(formKey);
-        } else {
-          log(formKey.toString());
-          _submitForm(formKey, _location);
-        }
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit form'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      print("Failed");
-    }
-  }
-
-  Future<void> pickContact() async {
-    PermissionStatus permissionStatus = await Permission.contacts.request();
-
-    if (permissionStatus.isGranted) {
-      Contact? contact = await ContactsService.openDeviceContactPicker();
-      if (contact != null && contact.phones!.isNotEmpty) {
-        setState(() {
-          _formKey.currentState?.fields['contact_number']
-              ?.didChange(contact.phones!.first.value);
-        });
-      }
-    } else {
-      // Handle permission denied scenario
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Contacts permission is required to pick a contact')),
-      );
-    }
-  }
+//functions
 
   Future<void> _askPermissions(String routeName) async {
     PermissionStatus permissionStatus = await _getContactPermission();
@@ -917,7 +884,7 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
           SnackBar(content: Text('Contact data not available on device'));
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
-  }
+  } //
 
   static Future<Position> _determinePosition() async {
     bool serviceEnabled;
@@ -987,33 +954,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       });
     }
   }
-
-  // Future<void> _fetchStates() async {
-  //   final response = await http.get(Uri.parse(
-  //     '${ApiEndPoints.baseUrl + ApiEndPoints.authEndpoints.fetchState}',
-  //   ));
-  //   if (response.statusCode == 200 || response.statusCode == 201) {
-  //     final List<dynamic> states = jsonDecode(response.body);
-
-  //     // Insert the fetched states into the SQLite table
-  //     for (var state in states) {
-  //       await StateDatabaseService.instance.insertState({
-  //         'state_id': state['state_id'],
-  //         'state': state['state'],
-  //       });
-  //     }
-
-  //     // Fetch the states from the local SQLite database
-  //     final fetchedStates = await StateDatabaseService.instance.fetchStates();
-
-  //     setState(() {
-  //       _states = fetchedStates;
-  //       _selectedState = widget.lead?.state_id;
-  //     });
-  //   } else {
-  //     throw Exception('Failed to load states');
-  //   }
-  // }
 
   Future<void> _fetchDistricts(String stateId) async {
     final response = await http.get(Uri.parse(
