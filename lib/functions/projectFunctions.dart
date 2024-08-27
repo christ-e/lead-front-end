@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
@@ -74,7 +73,16 @@ class ProjectFunction extends GetxController {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      Fluttertoast.showToast(msg: 'Please enable Your Location Service');
+      SnackBar(
+        content: Text('Please enable Your Location Service'),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.blueGrey,
+        behavior: SnackBarBehavior
+            .floating, // Optional: change this to normal if you don't want floating behavior
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ), // Optional: add a border radius for a more rounded effect
+      );
       return Future.error('Location services are disabled');
     }
 
@@ -82,15 +90,32 @@ class ProjectFunction extends GetxController {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        Fluttertoast.showToast(msg: 'Location permissions are denied');
+        SnackBar(
+          content: Text('Location permissions are denied'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.blueGrey,
+          behavior: SnackBarBehavior
+              .floating, // Optional: change this to normal if you don't want floating behavior
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ), // Optional: add a border radius for a more rounded effect
+        );
         return Future.error('Location permissions are denied');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      Fluttertoast.showToast(
-          msg:
-              'Location permissions are permanently denied, we cannot request permissions.');
+      SnackBar(
+        content: Text(
+            'Location permissions are permanently denied, we cannot request permissions.'),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.blueGrey,
+        behavior: SnackBarBehavior
+            .floating, // Optional: change this to normal if you don't want floating behavior
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ), // Optional: add a border radius for a more rounded effect
+      );
       return Future.error('Location permissions are permanently denied');
     }
 

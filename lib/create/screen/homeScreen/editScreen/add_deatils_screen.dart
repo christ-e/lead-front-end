@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, deprecated_member_use, avoid_print, use_build_context_synchronously, unused_element
 
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
@@ -14,10 +15,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:lead_application/constant/api_Endpoints.dart';
+import 'package:lead_application/controller/locationControler.dart';
 import 'package:lead_application/controller/loginControler.dart';
 import 'package:lead_application/widgets/bottom_nav.dart';
 import 'package:lead_application/model/leadModel.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+// import 'package:fluttertoast/fluttertoast.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:lead_application/model/user_model.dart';
 import 'package:lead_application/db_connection/services/database_services.dart';
@@ -28,6 +30,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../../../../controller/liveLocation_Controller.dart';
+import '../../../../db_connection/services/location_services.dart';
 import '../../../../db_connection/services/place_services.dart/state.dart';
 import '../../../../functions/projectFunctions.dart';
 
@@ -67,12 +71,43 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   late Future<List<Map<String, dynamic>>> _leads;
 
   LoginController loginController = Get.put(LoginController());
-  // final StateDatabaseService _dbService = StateDatabaseService.instance;
+  LiveLocation locationController = Get.put(LiveLocation());
   ProjectFunction functions = Get.put(ProjectFunction());
+  // final LiveLocationService _liveLocationService = LiveLocationService();
+
+  // void addLocation() async {
+  //   final userid = await SharedPreferences.getInstance();
+  //   final userId = userid.getInt('userId');
+
+  //   try {
+  //     List<Map<String, dynamic>> coordinates =
+  //         await DatabaseHelper.fetchCoordinates();
+
+  //     for (var coordinate in coordinates) {
+  //       double latitude = coordinate['latitude'];
+  //       double longitude = coordinate['longitude'];
+
+  //       await _liveLocationService.addLocation(
+  //           longitude, latitude, loginController.userid as int);
+  //     }
+
+  //     print('All locations added through the controller.');
+  //   } catch (e) {
+  //     print('Error adding location: $e');
+  //   }
+  // }
+
+  void startLocationUpdates() {
+    locationController.locationTimer =
+        Timer.periodic(Duration(seconds: 10), (Timer timer) {
+      locationController.addLocation();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    startLocationUpdates();
     _fetchStates();
     _fetchLeads();
 
@@ -296,14 +331,15 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       log('Lead Updated successfully.');
-      Fluttertoast.showToast(
-        msg: 'Lead Updated successfully',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM_LEFT,
-        timeInSecForIosWeb: 1,
+      SnackBar(
+        content: Text('Lead Updated successfully'),
+        duration: Duration(seconds: 1),
         backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0,
+        behavior: SnackBarBehavior
+            .floating, // Optional: change this to normal if you don't want floating behavior
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ), // Optional: add a border radius for a more rounded effect
       );
       Navigator.pop(
         context,
@@ -311,14 +347,15 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
       );
     } else {
       log('Failed to update: ${response.body}');
-      Fluttertoast.showToast(
-        msg: 'Failed to update',
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
+      SnackBar(
+        content: Text('Failed to update'),
+        duration: Duration(seconds: 1),
         backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
+        behavior: SnackBarBehavior
+            .floating, // Optional: change this to normal if you don't want floating behavior
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ), // Optional: add a border radius for a more rounded effect
       );
     }
   }
@@ -673,12 +710,22 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
                             });
                             await _getAddressFromLatLng(position);
                           } catch (e) {
-                            Fluttertoast.showToast(
-                                msg: "Error: $e",
-                                toastLength: Toast.LENGTH_LONG,
-                                gravity: ToastGravity.BOTTOM,
-                                backgroundColor: Colors.red,
-                                textColor: Colors.white);
+                            // Fluttertoast.showToast(
+                            //     msg: "Error: $e",
+                            //     toastLength: Toast.LENGTH_LONG,
+                            //     gravity: ToastGravity.BOTTOM,
+                            //     backgroundColor: Colors.red,
+                            //     textColor: Colors.white);
+                            SnackBar(
+                              content: Text('Error: $e'),
+                              duration: Duration(seconds: 1),
+                              backgroundColor: Colors.white,
+                              behavior: SnackBarBehavior
+                                  .floating, // Optional: change this to normal if you don't want floating behavior
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ), // Optional: add a border radius for a more rounded effect
+                            );
                           }
                         },
                         icon: Icon(Icons.gps_fixed_rounded)),
@@ -892,7 +939,17 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      Fluttertoast.showToast(msg: 'Please enable Your Location Service');
+      SnackBar(
+        content: Text('Please enable Your Location Service'),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.blueGrey,
+        behavior: SnackBarBehavior
+            .floating, // Optional: change this to normal if you don't want floating behavior
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ), // Optional: add a border radius for a more rounded effect
+      );
+      // Fluttertoast.showToast(msg: 'Please enable Your Location Service');
       return Future.error('Location services are disabled');
     }
 
@@ -900,15 +957,32 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        Fluttertoast.showToast(msg: 'Location permissions are denied');
+        SnackBar(
+          content: Text('Location permissions are denied'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.blueGrey,
+          behavior: SnackBarBehavior
+              .floating, // Optional: change this to normal if you don't want floating behavior
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ), // Optional: add a border radius for a more rounded effect
+        );
         return Future.error('Location permissions are denied');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      Fluttertoast.showToast(
-          msg:
-              'Location permissions are permanently denied, we cannot request permissions.');
+      SnackBar(
+        content: Text(
+            'Location permissions are permanently denied, we cannot request permissions.'),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.blueGrey,
+        behavior: SnackBarBehavior
+            .floating, // Optional: change this to normal if you don't want floating behavior
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ), // Optional: add a border radius for a more rounded effect
+      );
       return Future.error('Location permissions are permanently denied');
     }
 

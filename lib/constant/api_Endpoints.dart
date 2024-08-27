@@ -18,4 +18,8 @@ class _AuthEndPoints {
   final String leadData = 'lead';
   final String follow_upData = 'follow-ups/';
   final String leadImage = 'http://127.0.0.1:8000/storage/';
+
+  //livE location
+  final String addcoods = 'live-locations';
+  final String getcoods = 'live-locations_add';
 }

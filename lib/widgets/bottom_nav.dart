@@ -11,7 +11,7 @@ class BottomNav extends StatefulWidget {
 }
 
 class _BottomNavState extends State<BottomNav> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
   final List<Widget> _widgetOptions = <Widget>[
     ListScreen(),

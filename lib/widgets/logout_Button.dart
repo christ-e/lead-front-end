@@ -1,4 +1,9 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:lead_application/controller/locationControler.dart';
+import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/db_connection/services/database_services.dart';
 
 class LogoutButton extends StatelessWidget {
@@ -11,6 +16,7 @@ class LogoutButton extends StatelessWidget {
 
   Future<void> _checkDataAndLogout(BuildContext context) async {
     final DatabaseService _databaseService = DatabaseService.instance;
+    LiveLocation liveLocation = Get.put(LiveLocation());
 
     final List<Map<String, dynamic>> leads =
         await _databaseService.getAllLeads();
@@ -34,6 +40,8 @@ class LogoutButton extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).pop();
                   loginController.logout(context);
+                  stopLocationUpdates(liveLocation.locationTimer);
+                  log("Live Location Stoped");
                 },
                 child: Text("Logout"),
               ),
@@ -44,6 +52,10 @@ class LogoutButton extends StatelessWidget {
     } else {
       loginController.logout(context);
     }
+  }
+
+  void stopLocationUpdates(locationTimer) {
+    locationTimer?.cancel();
   }
 
   @override

@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors, unused_result
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +18,12 @@ import 'package:lead_application/model/follow_upDateModel.dart';
 import 'package:lead_application/db_connection/riverpod/api_functions.dart';
 import 'package:http/http.dart' as http;
 import 'package:lead_application/widgets/side_bar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import '../../../../model/leadModel.dart';
 
 class ListScreen extends ConsumerWidget {
   const ListScreen({super.key});
@@ -88,6 +94,273 @@ class ListScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  Future<Uint8List> loadNetworkImage(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Failed to load image');
+    }
+  }
+
+  Future<void> generateAndSavePdfTable(lead) async {
+    final pdf = pw.Document();
+
+    // Load image from network
+    final Uint8List imageData = await loadNetworkImage(
+        "${ApiEndPoints.authEndpoints.leadImage}${lead.image_path}");
+
+    // Create PDF page
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Image(
+                  pw.MemoryImage(imageData),
+                  width: 100,
+                  height: 100,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Center(
+                child: pw.Text(
+                  lead.name!.toUpperCase(),
+                  style: pw.TextStyle(
+                      fontSize: 24, fontWeight: pw.FontWeight.bold),
+                ),
+              ),
+              pw.SizedBox(height: 20),
+              // Create table
+              pw.Table(
+                border: pw.TableBorder.all(),
+                children: [
+                  // Header row
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Field',
+                            style:
+                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Value',
+                            style:
+                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  // Data rows
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Email'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.email.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Phone'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.contactNumber.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Address'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.address.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Location'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.location.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('State'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.state_name.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('District'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.district_name.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('City'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.city_name.toString()),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Priority'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.priority),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Follow-Up'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.followUp),
+                      ),
+                    ],
+                  ),
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text('Follow-Up Date'),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8.0),
+                        child: pw.Text(lead.follow_up_date.toString()),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    // Save the PDF file
+    final output = await getApplicationDocumentsDirectory();
+    final file = File("${output.path}/lead_data_${lead.id}.pdf");
+    await file.writeAsBytes(await pdf.save());
+
+    // Optionally share the PDF
+    await Printing.sharePdf(
+        bytes: await pdf.save(), filename: 'lead_data_${lead.id}.pdf');
+  }
+
+  Future<void> generateAndSavePdf(List<Lead> leads) async {
+    final pdf = pw.Document();
+
+    // Load images for all leads
+    final List<Uint8List?> imagesData =
+        await Future.wait(leads.map((lead) async {
+      if (lead.image_path != null) {
+        return await loadNetworkImage(
+            "${ApiEndPoints.authEndpoints.leadImage}${lead.image_path}");
+      } else {
+        return null;
+      }
+    }).toList());
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Table.fromTextArray(
+            headers: [
+              'Image',
+              'Name',
+              'Email',
+              'Phone',
+              'Address',
+              'Location',
+              'State',
+              'District',
+              'City',
+              'Priority',
+              'Follow-Up',
+              'Follow-Up Date'
+            ],
+            data: List<List<dynamic>>.generate(leads.length, (index) {
+              final lead = leads[index];
+              final imageData = imagesData[index];
+
+              return [
+                imageData != null
+                    ? pw.Image(pw.MemoryImage(imageData), width: 50, height: 50)
+                    : pw.Text("No Image"),
+                lead.name!.toUpperCase(),
+                lead.email ?? '',
+                lead.contactNumber ?? '',
+                lead.address ?? '',
+                lead.locationCoordinates ?? '',
+                lead.state_name ?? '',
+                lead.district_name ?? '',
+                lead.city_name ?? '',
+                lead.leadPriority ?? '',
+                lead.followUp ?? '',
+                lead.follow_up_date ?? '',
+              ];
+            }),
+          );
+        },
+      ),
+    );
+
+    // Save the PDF file to local storage
+    final output = await getApplicationDocumentsDirectory();
+    final file = File("${output.path}/leads_data.pdf");
+    await file.writeAsBytes(await pdf.save());
+
+    // Optionally share the PDF
+    await Printing.sharePdf(
+        bytes: await pdf.save(), filename: 'leads_data.pdf');
   }
 
   Widget build(BuildContext context, WidgetRef ref) {
@@ -219,6 +492,13 @@ class ListScreen extends ConsumerWidget {
                                           style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.w600),
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            generateAndSavePdf(leads);
+                                          },
+                                          icon: Icon(
+                                              Icons.picture_as_pdf_rounded),
                                         ),
                                         lead.image_path != null
                                             ? CircleAvatar(
