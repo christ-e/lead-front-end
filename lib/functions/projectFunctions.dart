@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -7,8 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:lead_application/constant/api_Endpoints.dart';
-import 'package:http/http.dart' as http;
 import 'package:lead_application/db_connection/services/location_services.dart';
 import 'package:permission_handler/permission_handler.dart';
 

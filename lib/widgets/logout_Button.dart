@@ -3,8 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lead_application/controller/locationControler.dart';
-import 'package:lead_application/create/screen/homeScreen/editScreen/add_deatils_screen.dart';
 import 'package:lead_application/db_connection/services/database_services.dart';
+import 'package:lead_application/db_connection/services/location_services.dart';
 
 class LogoutButton extends StatelessWidget {
   const LogoutButton({
@@ -17,6 +17,17 @@ class LogoutButton extends StatelessWidget {
   Future<void> _checkDataAndLogout(BuildContext context) async {
     final DatabaseService _databaseService = DatabaseService.instance;
     LiveLocation liveLocation = Get.put(LiveLocation());
+    LocationService locationService = LocationService();
+    DatabaseHelper databaseHelper = DatabaseHelper();
+
+    // void clearData() async {
+    //   await databaseHelper.clearCoordinates();
+    //   log('All coordinates cleared');
+    // }
+
+    void stopLocationUpdates(locationTimer) {
+      locationTimer?.cancel();
+    }
 
     final List<Map<String, dynamic>> leads =
         await _databaseService.getAllLeads();
@@ -39,9 +50,14 @@ class LogoutButton extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  loginController.logout(context);
+
                   stopLocationUpdates(liveLocation.locationTimer);
                   log("Live Location Stoped");
+                  locationService.stopLogging();
+                  databaseHelper.cleartable();
+                  loginController.logout(context);
+
+                  locationService.stopLogging();
                 },
                 child: Text("Logout"),
               ),
@@ -52,10 +68,6 @@ class LogoutButton extends StatelessWidget {
     } else {
       loginController.logout(context);
     }
-  }
-
-  void stopLocationUpdates(locationTimer) {
-    locationTimer?.cancel();
   }
 
   @override

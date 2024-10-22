@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:lead_application/controller/loginControler.dart';
-import 'package:lead_application/create/screen/drawerScreen/loggerScreen.dart';
-import 'package:lead_application/create/screen/drawerScreen/settingsScreen.dart';
+import 'package:lead_application/create/drawerScreen/loggerScreen.dart';
+import 'package:lead_application/create/drawerScreen/settingsScreen.dart';
 import 'package:lead_application/db_connection/services/database_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../create/screen/drawerScreen/locationTravelledScreen.dart';
+import '../create/drawerScreen/locationTravelledScreen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});

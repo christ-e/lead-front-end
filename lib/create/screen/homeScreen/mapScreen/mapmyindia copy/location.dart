@@ -13,24 +13,25 @@ class _LoggerState extends State<Logger> {
   @override
   void initState() {
     super.initState();
+    // Set callback to update UI when coordinates are updated
     _locationService.onLocationUpdated = (latitude, longitude) {
       setState(() {
         _fetchCoordinates();
       });
     };
-    _locationService.startLogging();
+    // _locationService.startLogging();
     _fetchCoordinates();
   }
 
-  // @override
-  // void dispose() {
-  //   _locationService.stopLogging();
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    _locationService.stopLogging();
+    super.dispose();
+  }
 
   void _clearData() async {
     await DatabaseHelper.clearCoordinates();
-    _fetchCoordinates();
+    _fetchCoordinates(); // Refresh the coordinates after clearing
     print('All coordinates cleared');
   }
 

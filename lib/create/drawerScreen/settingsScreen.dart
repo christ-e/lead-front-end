@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
-import '../../../controller/loginControler.dart';
+import '../../controller/loginControler.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

@@ -86,7 +86,6 @@
 //       );
 //       _markers.add(_currentLocationMarker);
 //     });
-
 //     _startLocationUpdates();
 //   }
 

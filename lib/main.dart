@@ -4,7 +4,7 @@ import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:lead_application/create/screen/credentialsScreen/login_Screen/login_screen.dart';
+import 'package:lead_application/create/screen/login_Screen/login_screen.dart';
 
 void main() async {
   // await _initHive();

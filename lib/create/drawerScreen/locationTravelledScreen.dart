@@ -5,7 +5,7 @@ import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import 'package:get/get.dart';
 import 'package:lead_application/controller/loginControler.dart';
 
-import '../../../db_connection/services/location_services.dart';
+import '../../db_connection/services/location_services.dart';
 
 class LocationTrack extends StatefulWidget {
   const LocationTrack({super.key});
@@ -109,6 +109,9 @@ class _LocationTrackState extends State<LocationTrack> {
   }
 
   void _addRouteToMap(List<LatLng> routeCoordinates) {
+    if (routeCoordinates.isEmpty) return;
+
+    // Add route line
     _mapController.addLine(LineOptions(
       geometry: routeCoordinates,
       lineColor: "#008000",
@@ -116,14 +119,23 @@ class _LocationTrackState extends State<LocationTrack> {
       lineOpacity: 0.8,
     ));
 
-    if (routeCoordinates.isNotEmpty) {
-      LatLng lastCoordinate = routeCoordinates.last;
+    // Add markers for all coordinates except the last one
+    for (int i = 0; i < routeCoordinates.length - 1; i++) {
       _mapController.addSymbol(SymbolOptions(
-        geometry: lastCoordinate,
-        iconImage: 'assets/images/location_pin_icon.png',
+        geometry: routeCoordinates[i],
+        iconImage: 'assets/images/location_pin_icon.png', // Default pin icon
         iconSize: 0.2,
       ));
     }
+
+    // Add marker for the last coordinate with a different pin icon
+    LatLng lastCoordinate = routeCoordinates.last;
+    _mapController.addSymbol(SymbolOptions(
+      geometry: lastCoordinate,
+      iconImage:
+          'assets/images/yelow_location.png', // Different pin icon for the last coordinate
+      iconSize: 0.4,
+    ));
   }
 
   Future<void> _fetchAndPlotCoordinates() async {

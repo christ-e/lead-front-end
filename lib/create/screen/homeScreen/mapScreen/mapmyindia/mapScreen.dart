@@ -5,9 +5,7 @@ import 'package:lead_application/constant/api_Endpoints.dart';
 import 'package:lead_application/model/leadModel.dart';
 import 'package:mapmyindia_gl/mapmyindia_gl.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:get/get.dart';
 import 'package:lead_application/controller/loginControler.dart';
 
@@ -69,7 +67,6 @@ class _MapScreenState extends State<MapScreen> {
         }
       }
 
-      // Optionally, fetch routes between all leads
       if (leads.length > 1) {
         for (int i = 0; i < leads.length - 1; i++) {
           _fetchRoute(
@@ -92,9 +89,7 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _checkLocationPermission() async {
     if (await Permission.location.request().isGranted) {
       _getCurrentLocation();
-    } else {
-      // Handle permission denial here if necessary
-    }
+    } else {}
   }
 
   Future<void> _getCurrentLocation() async {

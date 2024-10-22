@@ -73,33 +73,10 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
   LoginController loginController = Get.put(LoginController());
   LiveLocation locationController = Get.put(LiveLocation());
   ProjectFunction functions = Get.put(ProjectFunction());
-  // final LiveLocationService _liveLocationService = LiveLocationService();
-
-  // void addLocation() async {
-  //   final userid = await SharedPreferences.getInstance();
-  //   final userId = userid.getInt('userId');
-
-  //   try {
-  //     List<Map<String, dynamic>> coordinates =
-  //         await DatabaseHelper.fetchCoordinates();
-
-  //     for (var coordinate in coordinates) {
-  //       double latitude = coordinate['latitude'];
-  //       double longitude = coordinate['longitude'];
-
-  //       await _liveLocationService.addLocation(
-  //           longitude, latitude, loginController.userid as int);
-  //     }
-
-  //     print('All locations added through the controller.');
-  //   } catch (e) {
-  //     print('Error adding location: $e');
-  //   }
-  // }
 
   void startLocationUpdates() {
     locationController.locationTimer =
-        Timer.periodic(Duration(seconds: 10), (Timer timer) {
+        Timer.periodic(Duration(minutes: 1), (Timer timer) {
       locationController.addLocation();
     });
   }
@@ -118,7 +95,6 @@ class _AddDetailsScreenState extends State<AddDetailsScreen> {
 
   @override
   void dispose() {
-    // _dbService.clearStates();
     super.dispose();
   }
 

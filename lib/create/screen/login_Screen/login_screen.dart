@@ -1,18 +1,18 @@
 // ignore_for_file: prefer_const_constructors, unnecessary_import
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:lead_application/controller/loginControler.dart';
-import 'package:lead_application/create/screen/credentialsScreen/register_screen/createUser.dart';
+import 'package:lead_application/create/screen/register_screen/createUser.dart';
 import 'package:lead_application/validator/validation.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../db_connection/services/location_services.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,12 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     LoginController loginController = Get.put(LoginController());
+    LocationService locationService = LocationService();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: SingleChildScrollView(
           child: Column(
             children: [
               const SizedBox(height: 100),
@@ -126,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     FormBuilderTextField(
                       name: 'email',
                       controller: loginController.emailController,
+                      // initialValue: "sam@gmail.com",
                       decoration: InputDecoration(
                         labelText: 'Email',
                         prefixIcon: const Icon(Icons.person_outline),
@@ -143,6 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 16.0),
                     FormBuilderTextField(
                       name: 'password',
+                      // initialValue: "123456",
                       controller: loginController.passwordController,
                       decoration: InputDecoration(
                         labelText: 'Password',
@@ -181,6 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (_formKey.currentState!.saveAndValidate()) {
                               loginController.isLoading.value = true;
                               loginController.loginWithEmail(context);
+                              locationService.startLogging();
                             }
                           },
                           child: Obx(() => loginController.isLoading.value

@@ -29,7 +29,7 @@ class LiveLocation extends GetxController {
             longitude, latitude, userId ?? 0, date_time);
       }
 
-      log('All locations added through the controller.');
+      log('All locations added to Back-end.');
     } catch (e) {
       log('Error adding location: $e');
     }

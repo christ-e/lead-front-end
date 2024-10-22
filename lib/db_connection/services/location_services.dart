@@ -9,10 +9,10 @@ class DatabaseHelper {
       join(await getDatabasesPath(), 'coordinates.db'),
       onCreate: (db, version) {
         return db.execute(
-          "CREATE TABLE coordinates(id INTEGER PRIMARY KEY AUTOINCREMENT, latitude REAL NOT NULL, longitude REAL NOT NULL, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)",
+          "CREATE TABLE coordinates(id INTEGER PRIMARY KEY AUTOINCREMENT, latitude REAL NOT NULL, longitude REAL NOT NULL, timestamp DATE DEFAULT (datetime('now','localtime')))",
         );
       },
-      version: 1,
+      version: 3,
     );
   }
 
@@ -28,11 +28,16 @@ class DatabaseHelper {
 
   static Future<List<Map<String, dynamic>>> fetchCoordinates() async {
     final db = await _getDatabase();
-    return await db.query('coordinates', orderBy: 'timestamp DESC');
+    return await db.query('coordinates', orderBy: 'timestamp ASC');
   }
 
   // Add the clearCoordinates method here
   static Future<void> clearCoordinates() async {
+    final db = await _getDatabase();
+    await db.delete('coordinates');
+  }
+
+  void cleartable() async {
     final db = await _getDatabase();
     await db.delete('coordinates');
   }
@@ -45,14 +50,11 @@ class LocationService {
   LocationService({this.onLocationUpdated});
 
   void startLogging() {
-    // Set timer to fetch and store coordinates every 10 seconds
     _timer = Timer.periodic(Duration(seconds: 5), (Timer timer) async {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      // Store the coordinates in the database
       await DatabaseHelper.insertCoordinate(
           position.latitude, position.longitude);
-      // Update the UI if the callback is set
       if (onLocationUpdated != null) {
         onLocationUpdated!(position.latitude, position.longitude);
       }

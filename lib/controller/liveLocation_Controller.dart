@@ -3,8 +3,10 @@ import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:lead_application/controller/loginControler.dart';
+import 'package:lead_application/db_connection/services/location_services.dart';
 
 class LiveLocationService {
+  DatabaseHelper helper = DatabaseHelper();
   LoginController loginController = Get.put(LoginController());
   final String _addLocationUrl = 'http://127.0.0.1:8000/api/live-locations_add';
   final String _getLocationUrl = 'http://127.0.0.1:8000/api/live-locations';
@@ -29,6 +31,7 @@ class LiveLocationService {
 
     if (response.statusCode == 201) {
       log('Location added successfully.');
+      helper.cleartable();
     } else {
       throw Exception('Failed to add location.');
     }
@@ -43,7 +46,7 @@ class LiveLocationService {
       },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to fetch locations.');
